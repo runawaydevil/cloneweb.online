@@ -21,6 +21,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 // Progresso para Reddit e Pinterest
 const redditProgresso = {};
 const pinterestProgresso = {};
+const instagramProgresso = {};
 
 function registrarClone({ url, zipPath, status, erro, req }) {
   const log = {
@@ -115,6 +116,11 @@ app.get('/reddit', (req, res) => {
 // Rota para Pinterest Downloader
 app.get('/pinterest', (req, res) => {
   res.render('pinterest');
+});
+
+// Rota para Instagram Downloader
+app.get('/instagram', (req, res) => {
+  res.render('instagram');
 });
 
 // Rota para Youtube Downloader
@@ -393,6 +399,80 @@ app.get('/pinterest/progresso/:id', (req, res) => {
 
 app.get('/pinterest/downloadfile/:id', (req, res) => {
   const prog = pinterestProgresso[req.params.id];
+  if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  res.download(prog.outPath, prog.downloadName);
+});
+
+// Instagram Downloader
+app.post('/instagram/download', async (req, res) => {
+  try {
+    const { igurl } = req.body;
+    if (!igurl || !igurl.startsWith('http')) {
+      return res.status(400).send('URL inválida.');
+    }
+    const id = uuidv4();
+    instagramProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
+    res.json({ id });
+    (async () => {
+      try {
+        instagramProgresso[id].status = 'baixando';
+        instagramProgresso[id].progresso = 10;
+        // Baixar HTML do post
+        const { data: html } = await axios.get(igurl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const $ = cheerio.load(html);
+        let mediaUrl = null;
+        // 1. Procurar <meta property="og:video" content="...">
+        mediaUrl = $('meta[property="og:video"]').attr('content');
+        // 2. Se não achar, procurar <meta property="og:image" content="...">
+        if (!mediaUrl) {
+          mediaUrl = $('meta[property="og:image"]').attr('content');
+        }
+        if (!mediaUrl) throw new Error('Mídia não encontrada no post.');
+        instagramProgresso[id].progresso = 60;
+        // Baixar mídia
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const tempDir = os.tmpdir();
+        const randomNum = Math.floor(Math.random() * 1e6);
+        let ext = mediaUrl.includes('.mp4') ? 'mp4' : 'jpg';
+        const outPath = path.join(tempDir, `instagram_${randomNum}.${ext}`);
+        const writer = fs.createWriteStream(outPath);
+        const response = await axios({ url: mediaUrl, method: 'GET', responseType: 'stream' });
+        await new Promise((resolve, reject) => {
+          response.data.pipe(writer);
+          writer.on('finish', resolve);
+          writer.on('error', reject);
+        });
+        instagramProgresso[id].progresso = 100;
+        instagramProgresso[id].status = 'pronto';
+        instagramProgresso[id].downloadUrl = `/instagram/downloadfile/${id}`;
+        instagramProgresso[id].outPath = outPath;
+        instagramProgresso[id].downloadName = `cloneweb--instagram-media--${randomNum}.${ext}`;
+        setTimeout(() => {
+          try {
+            fs.unlinkSync(outPath);
+            delete instagramProgresso[id];
+          } catch {}
+        }, 60 * 1000);
+      } catch (e) {
+        instagramProgresso[id].status = 'erro';
+        instagramProgresso[id].erro = 'Erro ao baixar mídia do Instagram: ' + (e.message || e);
+      }
+    })();
+  } catch (e) {
+    res.status(500).send('Erro ao iniciar download do Instagram: ' + (e.message || e));
+  }
+});
+
+app.get('/instagram/progresso/:id', (req, res) => {
+  const prog = instagramProgresso[req.params.id];
+  if (!prog) return res.status(404).json({ erro: 'ID não encontrado.' });
+  res.json(prog);
+});
+
+app.get('/instagram/downloadfile/:id', (req, res) => {
+  const prog = instagramProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
   res.download(prog.outPath, prog.downloadName);
 });
