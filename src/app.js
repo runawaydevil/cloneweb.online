@@ -88,6 +88,6 @@ app.get('/download/:id', (req, res) => {
 });
 
 // Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor rodando em http://127.0.0.1:${PORT} (ou acesse pelo IP da sua rede local)`);
 }); 
