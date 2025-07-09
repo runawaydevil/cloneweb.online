@@ -7,6 +7,15 @@ const { v4: uuidv4 } = require('uuid');
 const progressoTarefas = {};
 const zipsProntos = {};
 const LOG_PATH = path.join(__dirname, '../storage/clones.log');
+const ytProgresso = {};
+const { default: axios } = require('axios');
+const cheerio = require('cheerio');
+const spawn = require('cross-spawn');
+const YTDLP_PATH = '/usr/local/bin/yt-dlp';
+
+// Progresso para Reddit e Pinterest
+const redditProgresso = {};
+const pinterestProgresso = {};
 
 function registrarClone({ url, zipPath, status, erro, req }) {
   const log = {
@@ -92,6 +101,304 @@ app.get('/download/:id', (req, res) => {
       console.error('Erro ao enviar ZIP:', err);
     }
   });
+});
+
+// Rota para Reddit Downloader
+app.get('/reddit', (req, res) => {
+  res.render('reddit');
+});
+// Rota para Pinterest Downloader
+app.get('/pinterest', (req, res) => {
+  res.render('pinterest');
+});
+
+// Rota para Youtube Downloader
+app.get('/youtube', (req, res) => {
+  res.render('youtube');
+});
+
+const ytdl = require('ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+const os = require('os');
+const tmp = require('path');
+
+// Rota para processar download do Youtube
+app.post('/youtube/download', async (req, res) => {
+  try {
+    const { yturl, tipo } = req.body;
+    if (!yturl || !tipo || !['mp3', 'mp4'].includes(tipo)) {
+      return res.status(400).send('Requisição inválida.');
+    }
+    const id = uuidv4();
+    ytProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
+    res.json({ id });
+    (async () => {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const tempDir = os.tmpdir();
+        const randomNum = Math.floor(Math.random() * 1e6);
+        let outPath, downloadName;
+        let ext = tipo === 'mp3' ? 'mp3' : 'mp4';
+        outPath = path.join(tempDir, `yt_${randomNum}.${ext}`);
+        downloadName = `cloneweb--youtube--${randomNum}.${ext}`;
+        ytProgresso[id].status = 'baixando';
+        ytProgresso[id].progresso = 5;
+        // Montar argumentos do yt-dlp
+        let args = [
+          yturl,
+          '-o', outPath,
+          '--no-playlist',
+          '--no-warnings',
+          '--progress',
+        ];
+        if (tipo === 'mp3') {
+          args.push('-x', '--audio-format', 'mp3', '--audio-quality', '192K');
+        } else {
+          args.push('-f', 'bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/mp4');
+        }
+        // Rodar yt-dlp
+        const proc = spawn(YTDLP_PATH, args);
+        proc.stderr.setEncoding('utf8');
+        proc.stdout.setEncoding('utf8');
+        let lastProgress = 5;
+        const progressRegex = /\[download\]\s+(\d+\.\d+)%/;
+        proc.stderr.on('data', (data) => {
+          const lines = data.split('\n');
+          for (const line of lines) {
+            const match = line.match(progressRegex);
+            if (match) {
+              let prog = Math.round(parseFloat(match[1]));
+              if (prog > lastProgress) {
+                lastProgress = prog;
+                ytProgresso[id].progresso = Math.min(99, prog);
+                ytProgresso[id].status = 'baixando';
+              }
+            }
+          }
+        });
+        proc.on('close', (code) => {
+          if (code === 0 && fs.existsSync(outPath)) {
+            ytProgresso[id].status = 'pronto';
+            ytProgresso[id].progresso = 100;
+            ytProgresso[id].downloadUrl = `/youtube/downloadfile/${id}`;
+            ytProgresso[id].outPath = outPath;
+            ytProgresso[id].downloadName = downloadName;
+            setTimeout(() => { try { fs.unlinkSync(outPath); delete ytProgresso[id]; } catch {} }, 60 * 1000);
+          } else {
+            ytProgresso[id].status = 'erro';
+            ytProgresso[id].erro = 'Erro ao baixar do YouTube (yt-dlp).';
+          }
+        });
+        proc.on('error', (err) => {
+          ytProgresso[id].status = 'erro';
+          ytProgresso[id].erro = 'Erro ao iniciar yt-dlp: ' + (err.message || err);
+        });
+      } catch (e) {
+        ytProgresso[id].status = 'erro';
+        ytProgresso[id].erro = 'Erro ao processar o download do Youtube: ' + (e.message || e);
+      }
+    })();
+  } catch (e) {
+    res.status(500).send('Erro ao processar o download do Youtube: ' + (e.message || e));
+  }
+});
+
+// Rota para consultar progresso
+app.get('/youtube/progresso/:id', (req, res) => {
+  const prog = ytProgresso[req.params.id];
+  if (!prog) return res.status(404).json({ erro: 'ID não encontrado.' });
+  res.json(prog);
+});
+
+// Rota para entregar o arquivo pronto
+app.get('/youtube/downloadfile/:id', (req, res) => {
+  const prog = ytProgresso[req.params.id];
+  if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  res.download(prog.outPath, prog.downloadName);
+});
+
+// REDDIT DOWNLOADER
+app.post('/reddit/download', async (req, res) => {
+  try {
+    const { redditurl } = req.body;
+    if (!redditurl || !redditurl.startsWith('http')) {
+      return res.status(400).send('URL inválida.');
+    }
+    const id = uuidv4();
+    redditProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
+    res.json({ id });
+    (async () => {
+      try {
+        redditProgresso[id].status = 'baixando';
+        redditProgresso[id].progresso = 10;
+        // Obter JSON do post
+        let jsonUrl = redditurl.split('?')[0];
+        if (!jsonUrl.endsWith('/')) jsonUrl += '/';
+        jsonUrl += '.json';
+        const { data } = await axios.get(jsonUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        // Extrair info do vídeo
+        const post = data[0].data.children[0].data;
+        const media = post.secure_media || post.media;
+        if (!media || !media.reddit_video) throw new Error('Vídeo não encontrado no post.');
+        const videoUrl = media.reddit_video.fallback_url;
+        // Tentar extrair áudio (Reddit separa vídeo e áudio)
+        const base = videoUrl.split('DASH_')[0];
+        const audioUrl = base + 'DASH_audio.mp4';
+        // Baixar vídeo
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const tempDir = os.tmpdir();
+        const randomNum = Math.floor(Math.random() * 1e6);
+        const videoPath = path.join(tempDir, `redditvid_${randomNum}.mp4`);
+        const audioPath = path.join(tempDir, `redditaud_${randomNum}.mp4`);
+        const outPath = path.join(tempDir, `redditfinal_${randomNum}.mp4`);
+        const downloadFile = async (url, dest) => {
+          const writer = fs.createWriteStream(dest);
+          const response = await axios({ url, method: 'GET', responseType: 'stream' });
+          return new Promise((resolve, reject) => {
+            response.data.pipe(writer);
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+          });
+        };
+        await downloadFile(videoUrl, videoPath);
+        redditProgresso[id].progresso = 60;
+        // Tentar baixar áudio
+        let hasAudio = false;
+        try {
+          await downloadFile(audioUrl, audioPath);
+          hasAudio = true;
+        } catch { hasAudio = false; }
+        redditProgresso[id].progresso = 80;
+        // Se tiver áudio, unir com ffmpeg
+        if (hasAudio) {
+          await new Promise((resolve, reject) => {
+            ffmpeg()
+              .input(videoPath)
+              .input(audioPath)
+              .outputOptions('-c:v copy', '-c:a aac', '-strict experimental')
+              .save(outPath)
+              .on('end', resolve)
+              .on('error', reject);
+          });
+        } else {
+          fs.copyFileSync(videoPath, outPath);
+        }
+        redditProgresso[id].progresso = 100;
+        redditProgresso[id].status = 'pronto';
+        redditProgresso[id].downloadUrl = `/reddit/downloadfile/${id}`;
+        redditProgresso[id].outPath = outPath;
+        redditProgresso[id].downloadName = `cloneweb--reddit-video--${randomNum}.mp4`;
+        setTimeout(() => {
+          try {
+            fs.unlinkSync(videoPath);
+            if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+            fs.unlinkSync(outPath);
+            delete redditProgresso[id];
+          } catch {}
+        }, 60 * 1000);
+      } catch (e) {
+        redditProgresso[id].status = 'erro';
+        redditProgresso[id].erro = 'Erro ao baixar vídeo do Reddit: ' + (e.message || e);
+      }
+    })();
+  } catch (e) {
+    res.status(500).send('Erro ao iniciar download do Reddit: ' + (e.message || e));
+  }
+});
+
+app.get('/reddit/progresso/:id', (req, res) => {
+  const prog = redditProgresso[req.params.id];
+  if (!prog) return res.status(404).json({ erro: 'ID não encontrado.' });
+  res.json(prog);
+});
+
+app.get('/reddit/downloadfile/:id', (req, res) => {
+  const prog = redditProgresso[req.params.id];
+  if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  res.download(prog.outPath, prog.downloadName);
+});
+
+// PINTEREST DOWNLOADER
+app.post('/pinterest/download', async (req, res) => {
+  try {
+    const { pinteresturl } = req.body;
+    if (!pinteresturl || !pinteresturl.startsWith('http')) {
+      return res.status(400).send('URL inválida.');
+    }
+    const id = uuidv4();
+    pinterestProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
+    res.json({ id });
+    (async () => {
+      try {
+        pinterestProgresso[id].status = 'baixando';
+        pinterestProgresso[id].progresso = 10;
+        // Baixar HTML do pin
+        const { data: html } = await axios.get(pinteresturl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const $ = cheerio.load(html);
+        // Procurar vídeo no HTML
+        let videoUrl = null;
+        // 1. Tentar pegar de <video src>
+        videoUrl = $('video').attr('src');
+        // 2. Se não achar, procurar em JSON embutido
+        if (!videoUrl) {
+          const matches = html.match(/"contentUrl":"(https:[^"]+\.mp4)"/);
+          if (matches) videoUrl = matches[1].replace(/\\u002F/g, '/');
+        }
+        if (!videoUrl) throw new Error('Vídeo não encontrado no pin.');
+        pinterestProgresso[id].progresso = 60;
+        // Baixar vídeo
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const tempDir = os.tmpdir();
+        const randomNum = Math.floor(Math.random() * 1e6);
+        const outPath = path.join(tempDir, `pinterest_${randomNum}.mp4`);
+        const writer = fs.createWriteStream(outPath);
+        const response = await axios({ url: videoUrl, method: 'GET', responseType: 'stream' });
+        await new Promise((resolve, reject) => {
+          response.data.pipe(writer);
+          writer.on('finish', resolve);
+          writer.on('error', reject);
+        });
+        pinterestProgresso[id].progresso = 100;
+        pinterestProgresso[id].status = 'pronto';
+        pinterestProgresso[id].downloadUrl = `/pinterest/downloadfile/${id}`;
+        pinterestProgresso[id].outPath = outPath;
+        pinterestProgresso[id].downloadName = `cloneweb--pinterest-video--${randomNum}.mp4`;
+        setTimeout(() => {
+          try {
+            fs.unlinkSync(outPath);
+            delete pinterestProgresso[id];
+          } catch {}
+        }, 60 * 1000);
+      } catch (e) {
+        pinterestProgresso[id].status = 'erro';
+        pinterestProgresso[id].erro = 'Erro ao baixar vídeo do Pinterest: ' + (e.message || e);
+      }
+    })();
+  } catch (e) {
+    res.status(500).send('Erro ao iniciar download do Pinterest: ' + (e.message || e));
+  }
+});
+
+app.get('/pinterest/progresso/:id', (req, res) => {
+  const prog = pinterestProgresso[req.params.id];
+  if (!prog) return res.status(404).json({ erro: 'ID não encontrado.' });
+  res.json(prog);
+});
+
+app.get('/pinterest/downloadfile/:id', (req, res) => {
+  const prog = pinterestProgresso[req.params.id];
+  if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  res.download(prog.outPath, prog.downloadName);
 });
 
 // Iniciar servidor
