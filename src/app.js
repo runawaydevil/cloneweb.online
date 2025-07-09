@@ -119,7 +119,7 @@ app.get('/pinterest', (req, res) => {
 
 // Rota para Youtube Downloader
 app.get('/youtube', (req, res) => {
-  res.render('youtube');
+  res.redirect('/?ytindisponivel=1');
 });
 
 // Rota para processar download do Youtube
