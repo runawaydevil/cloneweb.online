@@ -72,12 +72,18 @@ app.get('/progresso/:id', (req, res) => {
 app.get('/download/:id', (req, res) => {
   const info = zipsProntos[req.params.id];
   if (!info) return res.status(404).send('Arquivo não encontrado ou ainda não pronto.');
-  res.download(info.zipPath, 'site-clonado.zip', (err) => {
+  const downloadName = 'cloneweb--site-clonado.zip';
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+  res.download(info.zipPath, downloadName, (err) => {
+    // Não remover o ZIP da storage imediatamente, apenas a pasta temporária
     try {
-      // Não remover o ZIP da storage, apenas a pasta temporária
       if (info.tempDir && fs.existsSync(info.tempDir)) rimraf.sync(info.tempDir);
-      delete zipsProntos[req.params.id];
-      delete progressoTarefas[req.params.id];
+      // Remover o registro do ZIP e progresso após 2 minutos
+      setTimeout(() => {
+        delete zipsProntos[req.params.id];
+        delete progressoTarefas[req.params.id];
+      }, 2 * 60 * 1000); // 2 minutos
     } catch (e) {
       console.error('Erro ao limpar arquivos temporários:', e);
     }
