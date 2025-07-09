@@ -234,6 +234,9 @@ app.post('/reddit/download', async (req, res) => {
     if (!redditurl || !redditurl.startsWith('http')) {
       return res.status(400).send('URL inválida.');
     }
+    if (/cloneweb\.online/i.test(redditurl)) {
+      return res.status(400).send('I do not download myself.');
+    }
     const id = uuidv4();
     redditProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
     res.json({ id });
@@ -338,6 +341,9 @@ app.post('/pinterest/download', async (req, res) => {
     if (!pinteresturl || !pinteresturl.startsWith('http')) {
       return res.status(400).send('URL inválida.');
     }
+    if (/cloneweb\.online/i.test(pinteresturl)) {
+      return res.status(400).send('I do not download myself.');
+    }
     const id = uuidv4();
     pinterestProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
     res.json({ id });
@@ -413,6 +419,9 @@ app.post('/instagram/download', async (req, res) => {
     const { igurl } = req.body;
     if (!igurl || !igurl.startsWith('http')) {
       return res.status(400).send('URL inválida.');
+    }
+    if (/cloneweb\.online/i.test(igurl)) {
+      return res.status(400).send('I do not download myself.');
     }
     const id = uuidv4();
     instagramProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
