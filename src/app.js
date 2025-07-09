@@ -237,6 +237,7 @@ app.post('/reddit/download', async (req, res) => {
     if (/cloneweb\.online/i.test(redditurl)) {
       return res.status(400).send('I do not download myself.');
     }
+    logAccess({ req, tipo: 'reddit', url: redditurl });
     const id = uuidv4();
     redditProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
     res.json({ id });
@@ -344,6 +345,7 @@ app.post('/pinterest/download', async (req, res) => {
     if (/cloneweb\.online/i.test(pinteresturl)) {
       return res.status(400).send('I do not download myself.');
     }
+    logAccess({ req, tipo: 'pinterest', url: pinteresturl });
     const id = uuidv4();
     pinterestProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
     res.json({ id });
@@ -423,6 +425,7 @@ app.post('/instagram/download', async (req, res) => {
     if (/cloneweb\.online/i.test(igurl)) {
       return res.status(400).send('I do not download myself.');
     }
+    logAccess({ req, tipo: 'instagram', url: igurl });
     const id = uuidv4();
     instagramProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
     res.json({ id });
