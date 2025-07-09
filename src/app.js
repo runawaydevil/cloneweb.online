@@ -415,49 +415,75 @@ app.post('/instagram/download', async (req, res) => {
     res.json({ id });
     (async () => {
       try {
-        instagramProgresso[id].status = 'baixando';
-        instagramProgresso[id].progresso = 10;
-        // Baixar HTML do post
-        const { data: html } = await axios.get(igurl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        const $ = cheerio.load(html);
-        let mediaUrl = null;
-        // 1. Procurar <meta property="og:video" content="...">
-        mediaUrl = $('meta[property="og:video"]').attr('content');
-        // 2. Se não achar, procurar <meta property="og:image" content="...">
-        if (!mediaUrl) {
-          mediaUrl = $('meta[property="og:image"]').attr('content');
-        }
-        if (!mediaUrl) throw new Error('Mídia não encontrada no post.');
-        instagramProgresso[id].progresso = 60;
-        // Baixar mídia
         const fs = require('fs');
         const path = require('path');
         const os = require('os');
         const tempDir = os.tmpdir();
         const randomNum = Math.floor(Math.random() * 1e6);
-        let ext = mediaUrl.includes('.mp4') ? 'mp4' : 'jpg';
-        const outPath = path.join(tempDir, `instagram_${randomNum}.${ext}`);
-        const writer = fs.createWriteStream(outPath);
-        const response = await axios({ url: mediaUrl, method: 'GET', responseType: 'stream' });
-        await new Promise((resolve, reject) => {
-          response.data.pipe(writer);
-          writer.on('finish', resolve);
-          writer.on('error', reject);
+        const outPath = path.join(tempDir, `instagram_${randomNum}.%(ext)s`);
+        let downloadName = `cloneweb--instagram-media--${randomNum}`;
+        instagramProgresso[id].status = 'baixando';
+        instagramProgresso[id].progresso = 5;
+        // Montar argumentos do yt-dlp
+        let args = [
+          igurl,
+          '-o', outPath,
+          '--no-warnings',
+          '--progress',
+        ];
+        // Rodar yt-dlp
+        const proc = spawn(YTDLP_PATH, args);
+        proc.stderr.setEncoding('utf8');
+        proc.stdout.setEncoding('utf8');
+        let lastProgress = 5;
+        const progressRegex = /\[download\]\s+(\d+\.\d+)%/;
+        proc.stderr.on('data', (data) => {
+          const lines = data.split('\n');
+          for (const line of lines) {
+            const match = line.match(progressRegex);
+            if (match) {
+              let prog = Math.round(parseFloat(match[1]));
+              if (prog > lastProgress) {
+                lastProgress = prog;
+                instagramProgresso[id].progresso = Math.min(99, prog);
+                instagramProgresso[id].status = 'baixando';
+              }
+            }
+          }
         });
-        instagramProgresso[id].progresso = 100;
-        instagramProgresso[id].status = 'pronto';
-        instagramProgresso[id].downloadUrl = `/instagram/downloadfile/${id}`;
-        instagramProgresso[id].outPath = outPath;
-        instagramProgresso[id].downloadName = `cloneweb--instagram-media--${randomNum}.${ext}`;
-        setTimeout(() => {
-          try {
-            fs.unlinkSync(outPath);
-            delete instagramProgresso[id];
-          } catch {}
-        }, 60 * 1000);
+        proc.on('close', (code) => {
+          // Procurar arquivo baixado (pode ser mp4, jpg, etc)
+          let foundFile = null;
+          if (code === 0) {
+            const exts = ['mp4', 'jpg', 'jpeg', 'png', 'webp'];
+            for (const ext of exts) {
+              const candidate = path.join(tempDir, `instagram_${randomNum}.${ext}`);
+              if (fs.existsSync(candidate)) {
+                foundFile = candidate;
+                downloadName = `cloneweb--instagram-media--${randomNum}.${ext}`;
+                break;
+              }
+            }
+          }
+          if (foundFile) {
+            instagramProgresso[id].status = 'pronto';
+            instagramProgresso[id].progresso = 100;
+            instagramProgresso[id].downloadUrl = `/instagram/downloadfile/${id}`;
+            instagramProgresso[id].outPath = foundFile;
+            instagramProgresso[id].downloadName = downloadName;
+            setTimeout(() => { try { fs.unlinkSync(foundFile); delete instagramProgresso[id]; } catch {} }, 60 * 1000);
+          } else {
+            instagramProgresso[id].status = 'erro';
+            instagramProgresso[id].erro = 'Erro ao baixar do Instagram (yt-dlp).';
+          }
+        });
+        proc.on('error', (err) => {
+          instagramProgresso[id].status = 'erro';
+          instagramProgresso[id].erro = 'Erro ao iniciar yt-dlp: ' + (err.message || err);
+        });
       } catch (e) {
         instagramProgresso[id].status = 'erro';
-        instagramProgresso[id].erro = 'Erro ao baixar mídia do Instagram: ' + (e.message || e);
+        instagramProgresso[id].erro = 'Erro ao processar o download do Instagram: ' + (e.message || e);
       }
     })();
   } catch (e) {
@@ -475,6 +501,11 @@ app.get('/instagram/downloadfile/:id', (req, res) => {
   const prog = instagramProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
   res.download(prog.outPath, prog.downloadName);
+});
+
+// Rota para Midia Downloader
+app.get('/midia', (req, res) => {
+  res.render('midia');
 });
 
 // Iniciar servidor
