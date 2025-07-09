@@ -72,7 +72,8 @@ app.get('/progresso/:id', (req, res) => {
 app.get('/download/:id', (req, res) => {
   const info = zipsProntos[req.params.id];
   if (!info) return res.status(404).send('Arquivo não encontrado ou ainda não pronto.');
-  const downloadName = 'cloneweb--site-clonado.zip';
+  const randomNum = Math.floor(Math.random() * 1e6);
+  const downloadName = `cloneweb--${randomNum}.zip`;
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
   res.download(info.zipPath, downloadName, (err) => {
