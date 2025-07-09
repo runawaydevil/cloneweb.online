@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Midia Downloader | cloneweb.online</title>
+  <title>Media Downloader | cloneweb.online</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="icon" type="image/png" href="/logosave.png">
 </head>
@@ -12,28 +12,28 @@
     <div class="progress-container">
       <div class="progress-bar" id="progressBar" style="width:0%"></div>
     </div>
-    <div id="progressMsg">Preparando download...</div>
-    <button id="downloadBtn" style="display:none;margin-top:18px;">Baixar Mídia</button>
+    <div id="progressMsg">Preparing download...</div>
+    <button id="downloadBtn" style="display:none;margin-top:18px;">Download Media</button>
   </div>
   <div class="container">
     <header>
       <a href="/" style="text-decoration:none"><img src="/logosave.png" alt="Logo" class="logo"></a>
-      <h1>Midia Downloader</h1>
-      <p class="slogan">Baixe vídeos ou fotos do Instagram, Reddit, Pinterest (Youtube indisponível)</p>
+      <h1>Media Downloader</h1>
+      <p class="slogan">Download videos or photos from Instagram, Reddit, Pinterest (YouTube unavailable)</p>
     </header>
     <main>
       <form class="clone-form" id="midiaForm">
-        <label for="midiaurl">Link da mídia (Instagram, Reddit, Pinterest ou Youtube):</label>
-        <input type="url" id="midiaurl" name="midiaurl" placeholder="Cole aqui o link do post ou vídeo" required>
-        <button type="submit">Baixar</button>
+        <label for="midiaurl">Media link (Instagram, Reddit, Pinterest or YouTube):</label>
+        <input type="url" id="midiaurl" name="midiaurl" placeholder="Paste the post or video link here" required>
+        <button type="submit">Download</button>
       </form>
       <section class="info">
-        <h2>Como funciona?</h2>
-        <p>Insira o link de um post público do Instagram, Reddit ou Pinterest. O sistema detecta automaticamente e baixa a mídia original. <b>Youtube Downloader está indisponível nesta atualização.</b></p>
+        <h2>How does it work?</h2>
+        <p>Enter the link of a public post from Instagram, Reddit, or Pinterest. The system will automatically detect and download the original media. <b>YouTube Downloader is unavailable in this update.</b></p>
       </section>
     </main>
     <footer>
-      <p>Desenvolvido por RunawayDevil - <%= new Date().getFullYear() %></p>
+      <p>Developed by RunawayDevil - <%= new Date().getFullYear() %></p>
     </footer>
   </div>
   <script>
@@ -55,7 +55,7 @@
       const url = document.getElementById('midiaurl').value.trim();
       const tipo = detectType(url);
       if (tipo === 'youtube') {
-        alert('Youtube downloader is not available in this update.');
+        alert('YouTube downloader is not available in this update.');
         return;
       }
       let endpoint = '';
@@ -70,12 +70,12 @@
         endpoint = '/pinterest/download';
         body = { pinteresturl: url };
       } else {
-        alert('Link não reconhecido. Suporte apenas para Instagram, Reddit e Pinterest.');
+        alert('Unrecognized link. Only Instagram, Reddit, and Pinterest are supported.');
         return;
       }
       overlay.style.display = 'flex';
       progressBar.style.width = '0%';
-      progressMsg.textContent = 'Preparando download...';
+      progressMsg.textContent = 'Preparing download...';
       downloadBtn.style.display = 'none';
       const resp = await fetch(endpoint, {
         method: 'POST',
@@ -100,11 +100,11 @@
         const r = await fetch(progressoEndpoint);
         const prog = await r.json();
         progressBar.style.width = (prog.progresso || 0) + '%';
-        if (prog.status === 'iniciando') progressMsg.textContent = 'Iniciando download...';
-        else if (prog.status === 'baixando') progressMsg.textContent = `Baixando mídia... (${prog.progresso}%)`;
+        if (prog.status === 'iniciando') progressMsg.textContent = 'Starting download...';
+        else if (prog.status === 'baixando') progressMsg.textContent = `Downloading media... (${prog.progresso}%)`;
         else if (prog.status === 'pronto') {
           progressBar.style.width = '100%';
-          progressMsg.textContent = 'Pronto! Clique para baixar.';
+          progressMsg.textContent = 'Ready! Click to download.';
           downloadBtn.style.display = 'block';
           downloadBtn.onclick = () => {
             window.location = downloadEndpoint;
@@ -113,7 +113,7 @@
           };
           clearInterval(pollInterval);
         } else if (prog.status === 'erro') {
-          progressMsg.textContent = 'Erro: ' + (prog.erro || 'Falha desconhecida');
+          progressMsg.textContent = 'Error: ' + (prog.erro || 'Unknown failure');
           progressBar.style.background = '#f357a8';
           clearInterval(pollInterval);
         }
