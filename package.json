@@ -1,0 +1,23 @@
+{
+  "name": "cloneweb2zip",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "axios": "^1.10.0",
+    "body-parser": "^2.2.0",
+    "cheerio": "^1.1.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "rimraf": "^6.0.1",
+    "uuid": "^11.1.0"
+  }
+}

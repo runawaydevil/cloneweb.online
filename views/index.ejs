@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloneWeb2Zip - Download any website as a ZIP | cloneweb.online</title>
+  <meta name="description" content="CloneWeb2Zip lets you easily clone any website and download all its files (HTML, CSS, JS, images, fonts) as a ZIP archive. Fast, simple and free!">
+  <meta name="keywords" content="website downloader, website cloner, download website, clone site, save website, zip website, html downloader, cloneweb.online">
+  <meta property="og:title" content="CloneWeb2Zip - Download any website as a ZIP">
+  <meta property="og:description" content="CloneWeb2Zip lets you easily clone any website and download all its files (HTML, CSS, JS, images, fonts) as a ZIP archive. Fast, simple and free!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cloneweb.online/">
+  <meta property="og:image" content="https://cloneweb.online/logosave.png">
+  <link rel="canonical" href="https://cloneweb.online/">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/logosave.png">
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div id="progressMsg">Preparing cloning...</div>
+    <button id="downloadBtn" style="display:none;margin-top:18px;">Download ZIP</button>
+  </div>
+  <div class="container">
+    <header>
+      <img src="/logosave.png" alt="CloneWeb2Zip logo - cloneweb.online" class="logo">
+      <h1>CloneWeb2Zip</h1>
+      <p class="slogan">Clone any website and download as ZIP!</p>
+    </header>
+    <main>
+      <form class="clone-form" method="POST" action="/clonar">
+        <label for="url">Website URL:</label>
+        <input type="url" id="url" name="url" placeholder="https://example.com" required>
+        <div class="opcoes">
+          <label><input type="checkbox" name="renameAssets"> Rename all files</label>
+          <label><input type="checkbox" name="simpleDownload"> Simplified download</label>
+          <label><input type="checkbox" name="mobileVersion"> Copy mobile version</label>
+          <label><input type="checkbox" name="saveStructure"> Save website structure</label>
+        </div>
+        <button type="submit">Clone and download ZIP</button>
+      </form>
+      <section class="info">
+        <h2>How does it work?</h2>
+        <p>Enter the website URL you want to clone, choose the desired options and click <b>Clone and download ZIP</b>. The system will download all HTML, CSS, JavaScript, images and fonts for you!</p>
+        <div class="icones">
+          <div><span class="icon-html">&lt;/&gt;</span><br>HTML</div>
+          <div><span class="icon-css">#</span><br>CSS &amp; JS</div>
+          <div><span class="icon-img" aria-label="Images">🖼️</span><br>Images</div>
+          <div><span class="icon-font">A</span><br>Fonts</div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p id="footerText"></p>
+    </footer>
+  </div>
+  <script>
+    const form = document.querySelector('.clone-form');
+    const overlay = document.getElementById('loadingOverlay');
+    const progressBar = document.getElementById('progressBar');
+    const progressMsg = document.getElementById('progressMsg');
+    const downloadBtn = document.getElementById('downloadBtn');
+    let pollInterval = null;
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      overlay.style.display = 'flex';
+      progressBar.style.width = '0%';
+      progressMsg.textContent = 'Preparing cloning...';
+      downloadBtn.style.display = 'none';
+      // Envia formulário via fetch
+      const data = new FormData(form);
+      const body = {};
+      for (const [k, v] of data.entries()) body[k] = v;
+      const resp = await fetch('/clonar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const { id } = await resp.json();
+      // Poll de progresso
+      pollInterval = setInterval(async () => {
+        const r = await fetch(`/progresso/${id}`);
+        const prog = await r.json();
+        progressBar.style.width = (prog.progresso || 0) + '%';
+        if (prog.status === 'iniciando') progressMsg.textContent = 'Starting cloning...';
+        else if (prog.status === 'baixando') progressMsg.textContent = `Downloading and compressing... (${prog.progresso}%)`;
+        else if (prog.status === 'pronto') {
+          progressBar.style.width = '100%';
+          progressMsg.textContent = 'Ready! Click to download the ZIP.';
+          downloadBtn.style.display = 'block';
+          downloadBtn.onclick = () => {
+            window.location = `/download/${id}`;
+            overlay.style.display = 'none';
+            clearInterval(pollInterval);
+          };
+          clearInterval(pollInterval);
+        } else if (prog.status === 'erro') {
+          progressMsg.textContent = 'Error: ' + (prog.erro || 'Unknown failure');
+          progressBar.style.background = '#f357a8';
+          clearInterval(pollInterval);
+        }
+      }, 1200);
+    });
+    // Rodapé dinâmico
+    document.getElementById('footerText').textContent = 'Developed by RunawayDevil - ' + new Date().getFullYear();
+  </script>
+</body>
+</html> 
