@@ -15,7 +15,7 @@
 - All ZIPs are stored for 7 days for admin review
 - All clone actions are logged for security and audit
 
----
+---.
 
 ## Installation
 
@@ -58,9 +58,46 @@
 
 ---
 
+## Dica para Download Managers (IDM, etc.)
+Se estiver usando um gerenciador de downloads como o Internet Download Manager (IDM) e o download automático não funcionar:
+- Clique com o botão direito no botão de download ZIP e escolha "Copiar link".
+- Cole o link diretamente no seu gerenciador de downloads.
+- O link é válido por pelo menos 2 minutos após a geração do ZIP.
+
+---
+
 ## License
 MIT
 
 ---
 
 **Developed by RunawayDevil - {year}** 
+
+---
+
+## Novas Funcionalidades
+
+### Youtube Downloader (yt-dlp)
+- Baixe vídeos do YouTube em MP3 (áudio) ou MP4 (vídeo até 1080p).
+- Utiliza o yt-dlp para máxima compatibilidade com o YouTube.
+- Barra de progresso visual e download automático.
+- O arquivo baixado é removido do servidor em até 1 minuto após o download.
+
+### Reddit Downloader
+- Baixe vídeos de posts do Reddit (com áudio, se disponível).
+- O sistema une vídeo e áudio automaticamente.
+- Barra de progresso visual e download automático.
+- O arquivo baixado é removido do servidor em até 1 minuto após o download.
+
+### Pinterest Downloader
+- Baixe vídeos de pins do Pinterest facilmente.
+- Barra de progresso visual e download automático.
+- O arquivo baixado é removido do servidor em até 1 minuto após o download.
+
+---
+
+## Segurança e Privacidade
+- **Os arquivos baixados do YouTube, Reddit e Pinterest NÃO ficam salvos no servidor por mais de 1 minuto.**
+- Após o download, os arquivos temporários são automaticamente removidos.
+
+--- 

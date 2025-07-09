@@ -229,6 +229,53 @@ footer {
   box-shadow: 0 4px 16px #f357a855;
 }
 
+.yt-btn {
+  display: inline-block;
+  background: linear-gradient(90deg, #f357a8, #7b2ff2, #00cfff);
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 38px;
+  margin: 0 auto 0 auto;
+  text-decoration: none;
+  box-shadow: 0 2px 8px #7b2ff255;
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+  cursor: pointer;
+}
+.yt-btn:hover {
+  background: linear-gradient(90deg, #00cfff, #f357a8, #7b2ff2);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 16px #f357a855;
+}
+
+.reddit-btn {
+  background: linear-gradient(90deg,#ff4500,#ffb347,#7b2ff2);
+}
+.pinterest-btn {
+  background: linear-gradient(90deg,#e60023,#ffb347,#7b2ff2);
+}
+
+/* Youtube Downloader ajustes */
+#ytProgressWrap {
+  width: 100%;
+  max-width: 370px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+#ytProgressMsg {
+  text-align: center;
+  color: #7b2ff2;
+  font-size: 1.05rem;
+  margin-top: 8px;
+}
+#ytDownloadLink {
+  margin: 0 auto;
+  display: none;
+}
 @media (max-width: 600px) {
   .container {
     padding: 10px 2vw 8px 2vw;
@@ -253,5 +300,11 @@ footer {
   }
   h1 {
     font-size: 1.5rem;
+  }
+  #ytProgressWrap {
+    max-width: 98vw;
+  }
+  .info, .clone-form {
+    max-width: 98vw !important;
   }
 } 

@@ -13,6 +13,11 @@ const cheerio = require('cheerio');
 const spawn = require('cross-spawn');
 const YTDLP_PATH = '/usr/local/bin/yt-dlp';
 
+// ffmpeg para Reddit Downloader
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 // Progresso para Reddit e Pinterest
 const redditProgresso = {};
 const pinterestProgresso = {};
@@ -116,15 +121,6 @@ app.get('/pinterest', (req, res) => {
 app.get('/youtube', (req, res) => {
   res.render('youtube');
 });
-
-const ytdl = require('ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-
-ffmpeg.setFfmpegPath(ffmpegPath);
-
-const os = require('os');
-const tmp = require('path');
 
 // Rota para processar download do Youtube
 app.post('/youtube/download', async (req, res) => {

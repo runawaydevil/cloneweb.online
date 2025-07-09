@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinterest Downloader | CloneWeb2Zip</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/logosave.png">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="/logosave.png" alt="CloneWeb2Zip logo" class="logo">
+      <h1>Pinterest Downloader</h1>
+      <p class="slogan">Baixe vídeos do Pinterest facilmente!</p>
+    </header>
+    <main style="width:100%;max-width:100%;display:flex;flex-direction:column;align-items:center;">
+      <form class="clone-form" id="pinterestForm" method="POST" action="/pinterest/download" style="margin-bottom:18px;max-width:370px;width:100%;align-items:stretch;">
+        <label for="pinteresturl">Link do pin do Pinterest:</label>
+        <input type="url" id="pinteresturl" name="pinteresturl" placeholder="https://www.pinterest.com/pin/..." required>
+        <button type="submit" id="pinterestBtn">Baixar</button>
+        <div id="pinterestProgressWrap" style="display:none;margin-top:18px;">
+          <div class="progress-container">
+            <div class="progress-bar" id="pinterestProgressBar" style="width:0%"></div>
+          </div>
+          <div id="pinterestProgressMsg" style="margin-top:8px;"></div>
+          <a id="pinterestDownloadLink" href="#" class="yt-btn pinterest-btn" style="display:none;margin-top:18px;">Baixar vídeo</a>
+        </div>
+      </form>
+      <section class="info" style="max-width:370px;width:100%;">
+        <h2>Como funciona?</h2>
+        <p>Insira o link de um pin de vídeo do Pinterest e clique em <b>Baixar</b>.<br>
+        O sistema irá extrair o vídeo e entregar para você.<br>
+        Pins sem vídeo não são suportados.</p>
+      </section>
+      <div style="margin-top:18px;width:100%;display:flex;justify-content:center;">
+        <a href="/" class="yt-btn">← Voltar para o CloneWeb2Zip</a>
+      </div>
+    </main>
+    <footer>
+      <p id="footerText"></p>
+    </footer>
+  </div>
+  <script>
+    document.getElementById('footerText').textContent = 'Desenvolvido por RunawayDevil - ' + new Date().getFullYear();
+  </script>
+</body>
+</html> 
