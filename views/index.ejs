@@ -61,13 +61,11 @@
       </section>
     </main>
     <div style="width:100%;display:flex;flex-direction:column;align-items:center;margin-top:18px;gap:14px;">
-      <a href="#" class="yt-btn" style="background: #bbb; color: #888; pointer-events: none; cursor: not-allowed; opacity: 0.7;" title="Indisponível no momento devido a restrições do YouTube" tabindex="-1">Youtube Downloader</a>
-      <a href="/reddit" class="yt-btn" style="background:linear-gradient(90deg,#ff4500,#ffb347,#7b2ff2);">Reddit Downloader</a>
-      <a href="/pinterest" class="yt-btn" style="background:linear-gradient(90deg,#e60023,#ffb347,#7b2ff2);">Pinterest Downloader</a>
-      <a href="/instagram" class="yt-btn" style="background:linear-gradient(90deg,#f58529,#dd2a7b,#8134af,#515bd4);">Instagram Downloader</a>
+      <a href="/midia" class="yt-btn" style="background:linear-gradient(90deg,#7b2ff2,#f357a8,#ffb347,#f58529,#dd2a7b,#8134af,#515bd4);font-weight:bold;">Midia Downloader</a>
     </div>
     <footer>
       <p id="footerText"></p>
+      <div id="downloadsCount" style="margin-top:8px;font-size:15px;color:#666;"></div>
     </footer>
   </div>
   <script>
@@ -119,6 +117,15 @@
     });
     // Rodapé dinâmico
     document.getElementById('footerText').textContent = 'Developed by RunawayDevil - ' + new Date().getFullYear();
+    // Contador de downloads
+    async function atualizarContadorDownloads() {
+      try {
+        const resp = await fetch('/downloads-count');
+        const data = await resp.json();
+        document.getElementById('downloadsCount').textContent = `Downloads realizados: ${data.count}`;
+      } catch {}
+    }
+    atualizarContadorDownloads();
   </script>
 </body>
 </html> 

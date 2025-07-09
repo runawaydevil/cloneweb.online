@@ -85,6 +85,7 @@ app.get('/progresso/:id', (req, res) => {
 });
 
 app.get('/download/:id', (req, res) => {
+  incrementDownloadsCount();
   const info = zipsProntos[req.params.id];
   if (!info) return res.status(404).send('Arquivo não encontrado ou ainda não pronto.');
   const randomNum = Math.floor(Math.random() * 1e6);
@@ -222,6 +223,7 @@ app.get('/youtube/progresso/:id', (req, res) => {
 app.get('/youtube/downloadfile/:id', (req, res) => {
   const prog = ytProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
 });
 
@@ -325,6 +327,7 @@ app.get('/reddit/progresso/:id', (req, res) => {
 app.get('/reddit/downloadfile/:id', (req, res) => {
   const prog = redditProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
 });
 
@@ -400,6 +403,7 @@ app.get('/pinterest/progresso/:id', (req, res) => {
 app.get('/pinterest/downloadfile/:id', (req, res) => {
   const prog = pinterestProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
 });
 
@@ -500,6 +504,7 @@ app.get('/instagram/progresso/:id', (req, res) => {
 app.get('/instagram/downloadfile/:id', (req, res) => {
   const prog = instagramProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
 });
 
@@ -507,6 +512,24 @@ app.get('/instagram/downloadfile/:id', (req, res) => {
 app.get('/midia', (req, res) => {
   res.render('midia');
 });
+
+// --- INÍCIO CONTADOR DE DOWNLOADS ---
+const DOWNLOADS_COUNT_PATH = path.join(__dirname, '../storage/downloads_count.json');
+function getDownloadsCount() {
+  try {
+    if (!fs.existsSync(DOWNLOADS_COUNT_PATH)) fs.writeFileSync(DOWNLOADS_COUNT_PATH, '0');
+    return parseInt(fs.readFileSync(DOWNLOADS_COUNT_PATH, 'utf8')) || 0;
+  } catch { return 0; }
+}
+function incrementDownloadsCount() {
+  const count = getDownloadsCount() + 1;
+  fs.writeFileSync(DOWNLOADS_COUNT_PATH, String(count));
+  return count;
+}
+app.get('/downloads-count', (req, res) => {
+  res.json({ count: getDownloadsCount() });
+});
+// --- FIM CONTADOR DE DOWNLOADS ---
 
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {

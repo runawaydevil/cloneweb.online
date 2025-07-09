@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Midia Downloader | cloneweb.online</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/logosave.png">
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div id="progressMsg">Preparando download...</div>
+    <button id="downloadBtn" style="display:none;margin-top:18px;">Baixar Mídia</button>
+  </div>
+  <div class="container">
+    <header>
+      <a href="/" style="text-decoration:none"><img src="/logosave.png" alt="Logo" class="logo"></a>
+      <h1>Midia Downloader</h1>
+      <p class="slogan">Baixe vídeos ou fotos do Instagram, Reddit, Pinterest (Youtube indisponível)</p>
+    </header>
+    <main>
+      <form class="clone-form" id="midiaForm">
+        <label for="midiaurl">Link da mídia (Instagram, Reddit, Pinterest ou Youtube):</label>
+        <input type="url" id="midiaurl" name="midiaurl" placeholder="Cole aqui o link do post ou vídeo" required>
+        <button type="submit">Baixar</button>
+      </form>
+      <section class="info">
+        <h2>Como funciona?</h2>
+        <p>Insira o link de um post público do Instagram, Reddit ou Pinterest. O sistema detecta automaticamente e baixa a mídia original. <b>Youtube Downloader está indisponível nesta atualização.</b></p>
+      </section>
+    </main>
+    <footer>
+      <p>Desenvolvido por RunawayDevil - <%= new Date().getFullYear() %></p>
+    </footer>
+  </div>
+  <script>
+    const form = document.getElementById('midiaForm');
+    const overlay = document.getElementById('loadingOverlay');
+    const progressBar = document.getElementById('progressBar');
+    const progressMsg = document.getElementById('progressMsg');
+    const downloadBtn = document.getElementById('downloadBtn');
+    let pollInterval = null;
+    function detectType(url) {
+      if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
+      if (/instagram\.com/.test(url)) return 'instagram';
+      if (/reddit\.com/.test(url)) return 'reddit';
+      if (/pinterest\.com/.test(url)) return 'pinterest';
+      return null;
+    }
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const url = document.getElementById('midiaurl').value.trim();
+      const tipo = detectType(url);
+      if (tipo === 'youtube') {
+        alert('Youtube downloader is not available in this update.');
+        return;
+      }
+      let endpoint = '';
+      let body = {};
+      if (tipo === 'instagram') {
+        endpoint = '/instagram/download';
+        body = { igurl: url };
+      } else if (tipo === 'reddit') {
+        endpoint = '/reddit/download';
+        body = { redditurl: url };
+      } else if (tipo === 'pinterest') {
+        endpoint = '/pinterest/download';
+        body = { pinteresturl: url };
+      } else {
+        alert('Link não reconhecido. Suporte apenas para Instagram, Reddit e Pinterest.');
+        return;
+      }
+      overlay.style.display = 'flex';
+      progressBar.style.width = '0%';
+      progressMsg.textContent = 'Preparando download...';
+      downloadBtn.style.display = 'none';
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const { id } = await resp.json();
+      // Poll de progresso
+      let progressoEndpoint = '';
+      let downloadEndpoint = '';
+      if (tipo === 'instagram') {
+        progressoEndpoint = `/instagram/progresso/${id}`;
+        downloadEndpoint = `/instagram/downloadfile/${id}`;
+      } else if (tipo === 'reddit') {
+        progressoEndpoint = `/reddit/progresso/${id}`;
+        downloadEndpoint = `/reddit/downloadfile/${id}`;
+      } else if (tipo === 'pinterest') {
+        progressoEndpoint = `/pinterest/progresso/${id}`;
+        downloadEndpoint = `/pinterest/downloadfile/${id}`;
+      }
+      pollInterval = setInterval(async () => {
+        const r = await fetch(progressoEndpoint);
+        const prog = await r.json();
+        progressBar.style.width = (prog.progresso || 0) + '%';
+        if (prog.status === 'iniciando') progressMsg.textContent = 'Iniciando download...';
+        else if (prog.status === 'baixando') progressMsg.textContent = `Baixando mídia... (${prog.progresso}%)`;
+        else if (prog.status === 'pronto') {
+          progressBar.style.width = '100%';
+          progressMsg.textContent = 'Pronto! Clique para baixar.';
+          downloadBtn.style.display = 'block';
+          downloadBtn.onclick = () => {
+            window.location = downloadEndpoint;
+            overlay.style.display = 'none';
+            clearInterval(pollInterval);
+          };
+          clearInterval(pollInterval);
+        } else if (prog.status === 'erro') {
+          progressMsg.textContent = 'Erro: ' + (prog.erro || 'Falha desconhecida');
+          progressBar.style.background = '#f357a8';
+          clearInterval(pollInterval);
+        }
+      }, 1200);
+    });
+  </script>
+</body>
+</html> 
