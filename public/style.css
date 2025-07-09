@@ -5,6 +5,7 @@ body {
   background: linear-gradient(135deg, #7b2ff2 0%, #00cfff 50%, #f357a8 80%, #ffb347 100%);
   min-height: 100vh;
   color: #222;
+  box-sizing: border-box;
 }
 
 .container {
@@ -13,10 +14,17 @@ body {
   background: rgba(255,255,255,0.97);
   border-radius: 24px;
   box-shadow: 0 8px 32px rgba(123,47,242,0.10), 0 1.5px 8px #00cfff22;
-  padding: 32px 24px 16px 24px;
+  padding: 36px 28px 24px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
+}
+
+header, main, footer {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 header {
@@ -47,28 +55,35 @@ h1 {
 
 .clone-form {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(123,47,242,0.07);
-  padding: 24px 18px 18px 18px;
-  margin-bottom: 24px;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(123,47,242,0.13), 0 1.5px 8px #00cfff22;
+  padding: 28px 22px 22px 22px;
+  margin-bottom: 28px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   width: 100%;
+  max-width: 370px;
+  box-sizing: border-box;
+  align-items: stretch;
 }
+
 .clone-form label {
   font-weight: 500;
   color: #7b2ff2;
+  margin-bottom: 4px;
 }
+
 .clone-form input[type="url"] {
-  padding: 12px;
+  padding: 13px;
   border: 1.5px solid #7b2ff2;
   border-radius: 8px;
   font-size: 1rem;
   outline: none;
   transition: border 0.2s;
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
 }
 .clone-form input[type="url"]:focus {
   border: 1.5px solid #00cfff;
@@ -77,7 +92,7 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 0 18px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   justify-content: flex-start;
 }
 .opcoes label {
@@ -107,6 +122,9 @@ h1 {
 .info {
   margin-top: 12px;
   text-align: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .info h2 {
   color: #7b2ff2;
@@ -123,6 +141,9 @@ h1 {
   justify-content: space-around;
   margin-top: 10px;
   gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .icones div {
   background: linear-gradient(135deg, #00cfff 0%, #f357a8 100%);
@@ -132,6 +153,9 @@ h1 {
   min-width: 60px;
   font-size: 1.1rem;
   box-shadow: 0 2px 8px #7b2ff255;
+  flex: 1 1 0;
+  max-width: 80px;
+  box-sizing: border-box;
 }
 .icon-html, .icon-css, .icon-img, .icon-font {
   font-size: 1.5rem;
@@ -143,6 +167,9 @@ footer {
   margin-top: 24px;
   color: #7b2ff2;
   font-size: 0.95rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .loading-overlay {
@@ -208,7 +235,8 @@ footer {
     max-width: 98vw;
   }
   .clone-form {
-    padding: 10px 4px;
+    padding: 14px 4px 12px 4px;
+    max-width: 98vw;
   }
   .opcoes {
     flex-direction: column;
@@ -218,6 +246,7 @@ footer {
     min-width: 40px;
     font-size: 0.95rem;
     padding: 8px 4px 4px 4px;
+    max-width: 60px;
   }
   .logo {
     width: 70px;
