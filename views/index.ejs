@@ -65,7 +65,7 @@
     </div>
     <footer>
       <p id="footerText"></p>
-      <div id="downloadsCount" style="margin-top:8px;font-size:15px;color:#666;"></div>
+      <div id="downloadsCount" class="downloads-counter" style="margin-top:8px;font-size:15px;color:#666;"></div>
     </footer>
   </div>
   <script>
@@ -122,7 +122,7 @@
       try {
         const resp = await fetch('/downloads-count');
         const data = await resp.json();
-        document.getElementById('downloadsCount').textContent = `Downloads realizados: ${data.count}`;
+        document.getElementById('downloadsCount').textContent = `🔥 Downloads made: ${data.count}`;
       } catch {}
     }
     atualizarContadorDownloads();
