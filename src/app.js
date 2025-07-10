@@ -62,7 +62,8 @@ app.use(bodyParser.json());
 
 // Rota principal
 app.get('/', (req, res) => {
-  res.render('index');
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  res.render('index', { ip });
 });
 
 // Rota para clonar e baixar o site
@@ -556,7 +557,8 @@ app.get('/instagram/downloadfile/:id', (req, res) => {
 
 // Rota para Midia Downloader
 app.get('/midia', (req, res) => {
-  res.render('midia');
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  res.render('midia', { ip });
 });
 
 // --- INÍCIO CONTADOR DE DOWNLOADS ---

@@ -33,6 +33,11 @@
       </section>
     </main>
     <footer>
+      <div id="userIp" class="user-ip" style="margin-top:8px;font-size:15px;color:#f357a8;font-weight:bold;">
+        <% if (ip) { %>
+          <span style="background:#fff3cd;padding:4px 10px;border-radius:7px;box-shadow:0 1px 4px #0001;">Your IP address: <%= ip %></span>
+        <% } %>
+      </div>
       <p>Developed by RunawayDevil - <%= new Date().getFullYear() %></p>
     </footer>
   </div>
