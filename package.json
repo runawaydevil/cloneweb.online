@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "minify:js": "terser src/app.js -o src/app.min.js -c -m && terser src/clone.js -o src/clone.min.js -c -m",
+    "minify:css": "postcss public/style.css -o public/style.min.css",
+    "build": "npm run minify:js && npm run minify:css"
   },
   "keywords": [],
   "author": "",
@@ -24,5 +26,11 @@
     "rimraf": "^6.0.1",
     "uuid": "^11.1.0",
     "ytdl-core": "^4.11.5"
+  },
+  "devDependencies": {
+    "cssnano": "^7.0.7",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "terser": "^5.43.1"
   }
 }
