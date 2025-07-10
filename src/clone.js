@@ -1,3 +1,4 @@
+// Código minificado gerado automaticamente
 const axios = require('axios');
 const cheerio = require('cheerio');
 const archiver = require('archiver');
