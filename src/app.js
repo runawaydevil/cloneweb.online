@@ -342,6 +342,10 @@ app.get('/reddit/progresso/:id', (req, res) => {
 });
 
 app.get('/reddit/downloadfile/:id', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  if (!canDownload(ip)) {
+    return res.status(429).send('You have reached the daily download limit. Please try again in 24 hours.');
+  }
   const prog = redditProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
   incrementDownloadsCount();
@@ -422,6 +426,10 @@ app.get('/pinterest/progresso/:id', (req, res) => {
 });
 
 app.get('/pinterest/downloadfile/:id', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  if (!canDownload(ip)) {
+    return res.status(429).send('You have reached the daily download limit. Please try again in 24 hours.');
+  }
   const prog = pinterestProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
   incrementDownloadsCount();
@@ -527,6 +535,10 @@ app.get('/instagram/progresso/:id', (req, res) => {
 });
 
 app.get('/instagram/downloadfile/:id', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  if (!canDownload(ip)) {
+    return res.status(429).send('You have reached the daily download limit. Please try again in 24 hours.');
+  }
   const prog = instagramProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
   incrementDownloadsCount();
@@ -555,6 +567,30 @@ app.get('/downloads-count', (req, res) => {
   res.json({ count: getDownloadsCount() });
 });
 // --- FIM CONTADOR DE DOWNLOADS ---
+
+// Limite de downloads por IP (10 por 24h)
+const DOWNLOADS_PER_IP_PATH = path.join(__dirname, '../storage/downloads_per_ip.json');
+function getDownloadsPerIp() {
+  try {
+    if (!fs.existsSync(DOWNLOADS_PER_IP_PATH)) fs.writeFileSync(DOWNLOADS_PER_IP_PATH, '{}');
+    return JSON.parse(fs.readFileSync(DOWNLOADS_PER_IP_PATH, 'utf8'));
+  } catch { return {}; }
+}
+function saveDownloadsPerIp(data) {
+  fs.writeFileSync(DOWNLOADS_PER_IP_PATH, JSON.stringify(data));
+}
+function canDownload(ip) {
+  const data = getDownloadsPerIp();
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  if (!data[ip]) data[ip] = [];
+  // Remove registros antigos
+  data[ip] = data[ip].filter(ts => now - ts < DAY);
+  if (data[ip].length >= 10) return false;
+  data[ip].push(now);
+  saveDownloadsPerIp(data);
+  return true;
+}
 
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {
