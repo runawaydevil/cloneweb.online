@@ -348,6 +348,9 @@ app.get('/reddit/downloadfile/:id', (req, res) => {
   }
   const prog = redditProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  if (!isMediaFile(prog.downloadName)) {
+    return res.status(403).send('Only media files can be downloaded from this service.');
+  }
   incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
 });
@@ -432,6 +435,9 @@ app.get('/pinterest/downloadfile/:id', (req, res) => {
   }
   const prog = pinterestProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  if (!isMediaFile(prog.downloadName)) {
+    return res.status(403).send('Only media files can be downloaded from this service.');
+  }
   incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
 });
@@ -541,6 +547,9 @@ app.get('/instagram/downloadfile/:id', (req, res) => {
   }
   const prog = instagramProgresso[req.params.id];
   if (!prog || !prog.outPath || !prog.downloadName) return res.status(404).send('Arquivo não encontrado ou expirado.');
+  if (!isMediaFile(prog.downloadName)) {
+    return res.status(403).send('Only media files can be downloaded from this service.');
+  }
   incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
 });
@@ -590,6 +599,13 @@ function canDownload(ip) {
   data[ip].push(now);
   saveDownloadsPerIp(data);
   return true;
+}
+
+// Lista de extensões de mídia permitidas
+const ALLOWED_MEDIA_EXTS = ['mp4','jpg','jpeg','png','webp','gif','mov','avi','mp3','m4a','wav'];
+function isMediaFile(filename) {
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  return ALLOWED_MEDIA_EXTS.includes(ext);
 }
 
 // Iniciar servidor
