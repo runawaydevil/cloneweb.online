@@ -35,6 +35,19 @@ function registrarClone({ url, zipPath, status, erro, req }) {
   fs.appendFileSync(LOG_PATH, JSON.stringify(log) + '\n');
 }
 
+// Função para registrar logs de acesso
+function logAccess({ req, tipo, url }) {
+  const fs = require('fs');
+  const path = require('path');
+  const logDir = path.join(__dirname, '../storage');
+  if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+  const logPath = path.join(logDir, 'access.log');
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  const data = new Date().toISOString();
+  const linha = `[${data}] IP: ${ip} | Tipo: ${tipo} | URL: ${url}\n`;
+  fs.appendFileSync(logPath, linha);
+}
+
 const app = express();
 const PORT = process.env.PORT || 5463;
 
@@ -503,7 +516,7 @@ app.post('/instagram/download', async (req, res) => {
       }
     })();
   } catch (e) {
-    res.status(500).send('Erro ao iniciar download do Instagram: ' + (e.message || e));
+    res.status(500).json({ erro: 'Erro ao iniciar download do Instagram: ' + (e.message || e) });
   }
 });
 
