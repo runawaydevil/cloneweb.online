@@ -35,7 +35,11 @@
     <footer>
       <div id="userIp" class="user-ip" style="margin-top:8px;font-size:15px;color:#f357a8;font-weight:bold;">
         <% if (ip) { %>
-          <span style="background:#fff3cd;padding:4px 10px;border-radius:7px;box-shadow:0 1px 4px #0001;">Your IP address: <%= ip %></span>
+          <span style="background:#fff3cd;padding:4px 10px;border-radius:7px;box-shadow:0 1px 4px #0001;">Your IP address: <%= ip %>
+          <% if (countryCode) { %>
+            <span style="margin-left:8px;font-size:1.3em;vertical-align:middle;"> <%= countryCodeToFlag(countryCode) %></span>
+          <% } %>
+          </span>
         <% } %>
       </div>
       <p>Developed by RunawayDevil - <%= new Date().getFullYear() %></p>
@@ -141,4 +145,13 @@
     });
   </script>
 </body>
+<div id="legalNotice" style="position:fixed;right:18px;bottom:12px;z-index:9999;background:rgba(255,255,255,0.93);color:#f357a8;padding:8px 16px 8px 16px;border-radius:8px;font-size:14px;box-shadow:0 2px 8px #0002;opacity:0.93;display:flex;align-items:center;gap:10px;">
+  <span style="flex:1;">This site is a study project. We are not responsible for misuse.</span>
+  <button id="closeNotice" style="background:none;border:none;color:#f357a8;font-size:18px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px 0 4px;">×</button>
+</div>
+<script>
+  document.getElementById('closeNotice').onclick = function() {
+    document.getElementById('legalNotice').style.display = 'none';
+  };
+</script>
 </html> 
