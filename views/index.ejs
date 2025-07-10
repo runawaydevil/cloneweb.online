@@ -24,6 +24,7 @@
   </script>
 </head>
 <body>
+<% function countryCodeToFlag(cc) { if (!cc) return ''; return String.fromCodePoint(...[...cc.toUpperCase()].map(c=>0x1F1E6+c.charCodeAt(0)-65)); } %>
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
     <div class="progress-container">
       <div class="progress-bar" id="progressBar" style="width:0%"></div>

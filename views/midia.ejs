@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" href="/logosave.png">
 </head>
 <body>
+<% function countryCodeToFlag(cc) { if (!cc) return ''; return String.fromCodePoint(...[...cc.toUpperCase()].map(c=>0x1F1E6+c.charCodeAt(0)-65)); } %>
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
     <div class="progress-container">
       <div class="progress-bar" id="progressBar" style="width:0%"></div>
@@ -33,6 +34,7 @@
       </section>
     </main>
     <footer>
+      <p>Developed by RunawayDevil - <%= new Date().getFullYear() %></p>
       <div id="userIp" class="user-ip" style="margin-top:8px;font-size:15px;color:#f357a8;font-weight:bold;">
         <% if (ip) { %>
           <span style="background:#fff3cd;padding:4px 10px;border-radius:7px;box-shadow:0 1px 4px #0001;">Your IP address: <%= ip %>
@@ -42,7 +44,6 @@
           </span>
         <% } %>
       </div>
-      <p>Developed by RunawayDevil - <%= new Date().getFullYear() %></p>
     </footer>
   </div>
   <script>
