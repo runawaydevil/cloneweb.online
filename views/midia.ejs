@@ -19,7 +19,7 @@
     <header>
       <a href="/" style="text-decoration:none"><img src="/logosave.png" alt="Logo" class="logo"></a>
       <h1>Media Downloader</h1>
-      <p class="slogan">Download videos or photos from Instagram, Reddit, Pinterest (YouTube unavailable)</p>
+      <p class="slogan">Download any media from the web.</p>
     </header>
     <main>
       <form class="clone-form" id="midiaForm">
@@ -28,8 +28,8 @@
         <button type="submit">Download</button>
       </form>
       <section class="info">
-        <h2>How does it work?</h2>
-        <p>Enter the link of a public post from Instagram, Reddit, or Pinterest. The system will automatically detect and download the original media. <b>YouTube Downloader is unavailable in this update.</b></p>
+        <h2>About</h2>
+        <p>Media Downloader allows you to easily download videos and photos from Instagram, Reddit, Pinterest, and many other public sources. Simply paste the link of the media you want, and the system will automatically detect and fetch the highest quality version available. No registration required, no watermarks, and completely free. Please note: YouTube downloads are currently unavailable due to platform restrictions.</p>
       </section>
     </main>
     <footer>
@@ -82,7 +82,22 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      const { id } = await resp.json();
+      let id;
+      if (resp.ok) {
+        ({ id } = await resp.json());
+      } else {
+        let errMsg = 'Unknown error';
+        try {
+          const err = await resp.json();
+          errMsg = err.erro || JSON.stringify(err);
+        } catch (e) {}
+        overlay.style.display = 'flex';
+        progressBar.style.width = '100%';
+        progressBar.style.background = '#f357a8';
+        progressMsg.textContent = 'Error: ' + errMsg;
+        downloadBtn.style.display = 'none';
+        return;
+      }
       // Poll de progresso
       let progressoEndpoint = '';
       let downloadEndpoint = '';
