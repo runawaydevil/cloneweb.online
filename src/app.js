@@ -12,7 +12,27 @@ const ytProgresso = {};
 const { default: axios } = require('axios');
 const cheerio = require('cheerio');
 const spawn = require('cross-spawn');
-const YTDLP_PATH = '/usr/local/bin/yt-dlp';
+// Tentar diferentes caminhos para yt-dlp
+const YTDLP_PATHS = [
+  '/usr/local/bin/yt-dlp',
+  '/usr/bin/yt-dlp',
+  'yt-dlp',
+  './yt-dlp'
+];
+
+function findYtDlp() {
+  for (const path of YTDLP_PATHS) {
+    try {
+      require('child_process').execSync(`${path} --version`, { stdio: 'ignore' });
+      return path;
+    } catch (e) {
+      continue;
+    }
+  }
+  return null;
+}
+
+const YTDLP_PATH = findYtDlp();
 
 // ffmpeg para Reddit Downloader
 const ffmpeg = require('fluent-ffmpeg');
@@ -459,10 +479,17 @@ app.post('/instagram/download', async (req, res) => {
     if (/cloneweb\.online/i.test(igurl)) {
       return res.status(400).send('I do not download myself.');
     }
+    
+    // Verificar se yt-dlp está disponível
+    if (!YTDLP_PATH) {
+      return res.status(500).json({ erro: 'yt-dlp não está instalado ou não foi encontrado no sistema.' });
+    }
+    
     logAccess({ req, tipo: 'instagram', url: igurl });
     const id = uuidv4();
     instagramProgresso[id] = { status: 'iniciando', progresso: 0, erro: null, downloadUrl: null };
     res.json({ id });
+    
     (async () => {
       try {
         const fs = require('fs');
@@ -472,22 +499,39 @@ app.post('/instagram/download', async (req, res) => {
         const randomNum = Math.floor(Math.random() * 1e6);
         const outPath = path.join(tempDir, `instagram_${randomNum}.%(ext)s`);
         let downloadName = `cloneweb--instagram-media--${randomNum}`;
+        
         instagramProgresso[id].status = 'baixando';
         instagramProgresso[id].progresso = 5;
-        // Montar argumentos do yt-dlp
+        
+        // Montar argumentos do yt-dlp com melhor configuração
         let args = [
           igurl,
           '-o', outPath,
           '--no-warnings',
           '--progress',
+          '--no-playlist',
+          '--extract-audio',
+          '--audio-format', 'mp3',
+          '--audio-quality', '192K',
+          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         ];
+        
+        console.log(`[Instagram] Iniciando download: ${igurl}`);
+        console.log(`[Instagram] Comando: ${YTDLP_PATH} ${args.join(' ')}`);
+        
         // Rodar yt-dlp
         const proc = spawn(YTDLP_PATH, args);
         proc.stderr.setEncoding('utf8');
         proc.stdout.setEncoding('utf8');
+        
         let lastProgress = 5;
+        let errorOutput = '';
         const progressRegex = /\[download\]\s+(\d+\.\d+)%/;
+        
         proc.stderr.on('data', (data) => {
+          errorOutput += data;
+          console.log(`[Instagram] stderr: ${data}`);
+          
           const lines = data.split('\n');
           for (const line of lines) {
             const match = line.match(progressRegex);
@@ -501,42 +545,62 @@ app.post('/instagram/download', async (req, res) => {
             }
           }
         });
+        
+        proc.stdout.on('data', (data) => {
+          console.log(`[Instagram] stdout: ${data}`);
+        });
+        
         proc.on('close', (code) => {
+          console.log(`[Instagram] Processo finalizado com código: ${code}`);
+          console.log(`[Instagram] Erro output: ${errorOutput}`);
+          
           // Procurar arquivo baixado (pode ser mp4, jpg, etc)
           let foundFile = null;
           if (code === 0) {
-            const exts = ['mp4', 'jpg', 'jpeg', 'png', 'webp'];
+            const exts = ['mp4', 'jpg', 'jpeg', 'png', 'webp', 'mp3', 'm4a'];
             for (const ext of exts) {
               const candidate = path.join(tempDir, `instagram_${randomNum}.${ext}`);
               if (fs.existsSync(candidate)) {
                 foundFile = candidate;
                 downloadName = `cloneweb--instagram-media--${randomNum}.${ext}`;
+                console.log(`[Instagram] Arquivo encontrado: ${foundFile}`);
                 break;
               }
             }
           }
+          
           if (foundFile) {
             instagramProgresso[id].status = 'pronto';
             instagramProgresso[id].progresso = 100;
             instagramProgresso[id].downloadUrl = `/instagram/downloadfile/${id}`;
             instagramProgresso[id].outPath = foundFile;
             instagramProgresso[id].downloadName = downloadName;
-            setTimeout(() => { try { fs.unlinkSync(foundFile); delete instagramProgresso[id]; } catch {} }, 60 * 1000);
+            setTimeout(() => { 
+              try { 
+                fs.unlinkSync(foundFile); 
+                delete instagramProgresso[id]; 
+              } catch {} 
+            }, 60 * 1000);
           } else {
             instagramProgresso[id].status = 'erro';
-            instagramProgresso[id].erro = 'Erro ao baixar do Instagram (yt-dlp).';
+            instagramProgresso[id].erro = `Erro ao baixar do Instagram. Código: ${code}. Detalhes: ${errorOutput.substring(0, 200)}`;
           }
         });
+        
         proc.on('error', (err) => {
+          console.error(`[Instagram] Erro no processo: ${err.message}`);
           instagramProgresso[id].status = 'erro';
           instagramProgresso[id].erro = 'Erro ao iniciar yt-dlp: ' + (err.message || err);
         });
+        
       } catch (e) {
+        console.error(`[Instagram] Exceção: ${e.message}`);
         instagramProgresso[id].status = 'erro';
         instagramProgresso[id].erro = 'Erro ao processar o download do Instagram: ' + (e.message || e);
       }
     })();
   } catch (e) {
+    console.error(`[Instagram] Erro na requisição: ${e.message}`);
     res.status(500).json({ erro: 'Erro ao iniciar download do Instagram: ' + (e.message || e) });
   }
 });
@@ -559,6 +623,37 @@ app.get('/instagram/downloadfile/:id', (req, res) => {
   }
   incrementDownloadsCount();
   res.download(prog.outPath, prog.downloadName);
+});
+
+// Rota para verificar status do yt-dlp
+app.get('/ytdlp-status', (req, res) => {
+  try {
+    if (!YTDLP_PATH) {
+      return res.json({ 
+        status: 'error', 
+        message: 'yt-dlp não encontrado',
+        available: false 
+      });
+    }
+    
+    // Testar se yt-dlp funciona
+    const { execSync } = require('child_process');
+    const version = execSync(`${YTDLP_PATH} --version`, { encoding: 'utf8' }).trim();
+    
+    res.json({ 
+      status: 'ok', 
+      message: 'yt-dlp funcionando',
+      version: version,
+      path: YTDLP_PATH,
+      available: true 
+    });
+  } catch (e) {
+    res.json({ 
+      status: 'error', 
+      message: 'yt-dlp não está funcionando: ' + e.message,
+      available: false 
+    });
+  }
 });
 
 // Rota para Midia Downloader
