@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 const os = require('os');
+const puppeteer = require('puppeteer');
 
 // Função utilitária para baixar arquivos
 async function baixarArquivo(url, destino) {
@@ -142,6 +143,18 @@ async function clonarESzipar({ url, renameAssets, simpleDownload, mobileVersion,
       }
       await baixarSeNovo(assetAbs, assetRel);
     }
+  }
+
+  // Tirar screenshot da página principal
+  try {
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.screenshot({ path: path.join(tempDir, 'screenshot.png'), fullPage: true });
+    await browser.close();
+    console.log('[OK] Screenshot salvo!');
+  } catch (e) {
+    console.error('[ERRO] Falha ao tirar screenshot:', e.message);
   }
 
   // Após baixar tudo, preparar lista de HTMLs para uso em todos os trechos seguintes

@@ -25,10 +25,25 @@
    chmod +x yt-dlp
    ```
 
-4. **Instagram bloqueou o acesso**
-   - O Instagram pode ter detectado o download automatizado
-   - Tente com uma URL diferente
-   - Aguarde alguns minutos e tente novamente
+4. **Instagram bloqueou o acesso (MOSTRAR)**
+   - O Instagram bloqueia downloads automatizados
+   - **SOLUÇÃO:** O sistema agora usa método alternativo automaticamente
+   - Se yt-dlp falhar, tenta API pública do Instagram
+   - Funciona para posts públicos sem login
+
+### Erro: "rate-limit reached or login required"
+
+**Este erro é comum e foi resolvido!**
+
+O sistema agora:
+1. **Tenta primeiro com yt-dlp** (com cookies do navegador)
+2. **Se falhar, usa método alternativo** (API pública do Instagram)
+3. **Funciona para posts públicos** sem necessidade de login
+
+**Não é necessário:**
+- Fazer login no Instagram
+- Configurar cookies manualmente
+- Usar contas especiais
 
 ### Verificar Status do yt-dlp
 
@@ -98,6 +113,28 @@ yt-dlp "https://www.instagram.com/p/EXEMPLO/" --no-warnings
 
 # Se funcionar, o problema está no código
 # Se não funcionar, o problema é com o yt-dlp
+```
+
+### Teste do Novo Sistema
+
+O sistema agora tem **duplo método de fallback**:
+
+1. **Método 1:** yt-dlp com cookies do navegador
+2. **Método 2:** API pública do Instagram (se yt-dlp falhar)
+
+**Para testar:**
+1. Inicie o servidor: `npm start`
+2. Acesse: `http://localhost:5463/midia`
+3. Cole uma URL do Instagram
+4. Observe os logs no console
+
+**Logs esperados:**
+```
+[Instagram] Tentativa 1: yt-dlp ... (com cookies)
+[Instagram] Primeira tentativa falhou, tentando método alternativo...
+[Instagram Alt] Iniciando download alternativo: https://...
+[Instagram Alt] API funcionou: https://...
+[Instagram Alt] URL da mídia encontrada: https://...
 ```
 
 ### URLs Suportadas

@@ -69,6 +69,26 @@ function logAccess({ req, tipo, url }) {
   fs.appendFileSync(logPath, linha);
 }
 
+// Sistema de log centralizado
+const SYSTEM_LOG_PATH = path.join(__dirname, '../storage/system.log');
+function logToFile(...args) {
+  const msg = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+  const linha = `[${new Date().toISOString()}] ${msg}\n`;
+  fs.appendFileSync(SYSTEM_LOG_PATH, linha);
+}
+
+// Sobrescrever console.log e console.error
+const originalLog = console.log;
+const originalError = console.error;
+console.log = (...args) => {
+  logToFile('[LOG]', ...args);
+  originalLog(...args);
+};
+console.error = (...args) => {
+  logToFile('[ERRO]', ...args);
+  originalError(...args);
+};
+
 const app = express();
 const PORT = process.env.PORT || 5463;
 
@@ -128,10 +148,24 @@ app.get('/download/:id', (req, res) => {
   incrementDownloadsCount();
   const info = zipsProntos[req.params.id];
   if (!info) return res.status(404).send('Arquivo não encontrado ou ainda não pronto.');
+  // Extrair domínio do site clonado
+  let dominio = 'site';
+  try {
+    const zipBase = info.zipPath.split('site-clonado-')[1];
+    if (zipBase) {
+      // O domínio não está no nome do arquivo, então vamos tentar pegar do progressoTarefas
+      // ou do arquivo temporário
+      // Se não conseguir, mantém 'site'
+    }
+    if (progressoTarefas[req.params.id] && progressoTarefas[req.params.id].url) {
+      const url = progressoTarefas[req.params.id].url;
+      dominio = new URL(url).hostname.replace(/^www\./, '').replace(/[^a-zA-Z0-9\-]/g, '-');
+    }
+  } catch {}
   const randomNum = Math.floor(Math.random() * 1e6);
-  const downloadName = `cloneweb--${randomNum}.zip`;
+  const downloadName = `cloneweb-${dominio}-${randomNum}.zip`;
   res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+  res.setHeader('Content-Disposition', `attachment; filename=\"${downloadName}\"`);
   res.download(info.zipPath, downloadName, (err) => {
     // Não remover o ZIP da storage imediatamente, apenas a pasta temporária
     try {
@@ -503,95 +537,166 @@ app.post('/instagram/download', async (req, res) => {
         instagramProgresso[id].status = 'baixando';
         instagramProgresso[id].progresso = 5;
         
-        // Montar argumentos do yt-dlp com melhor configuração
+        // Primeira tentativa: com cookies do navegador
         let args = [
           igurl,
           '-o', outPath,
           '--no-warnings',
           '--progress',
           '--no-playlist',
-          '--extract-audio',
-          '--audio-format', 'mp3',
-          '--audio-quality', '192K',
-          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          '--cookies-from-browser', 'chrome',
+          '--cookies-from-browser', 'firefox',
+          '--cookies-from-browser', 'edge',
+          '--cookies-from-browser', 'safari'
+        ];
+        
+        // Se falhar, tentar sem cookies (método alternativo)
+        let fallbackArgs = [
+          igurl,
+          '-o', outPath,
+          '--no-warnings',
+          '--progress',
+          '--no-playlist',
+          '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          '--extractor-args', 'instagram:login=required',
+          '--force-generic-extractor',
+          '--no-check-certificates',
+          '--ignore-errors'
         ];
         
         console.log(`[Instagram] Iniciando download: ${igurl}`);
-        console.log(`[Instagram] Comando: ${YTDLP_PATH} ${args.join(' ')}`);
         
-        // Rodar yt-dlp
-        const proc = spawn(YTDLP_PATH, args);
-        proc.stderr.setEncoding('utf8');
-        proc.stdout.setEncoding('utf8');
-        
-        let lastProgress = 5;
-        let errorOutput = '';
-        const progressRegex = /\[download\]\s+(\d+\.\d+)%/;
-        
-        proc.stderr.on('data', (data) => {
-          errorOutput += data;
-          console.log(`[Instagram] stderr: ${data}`);
-          
-          const lines = data.split('\n');
-          for (const line of lines) {
-            const match = line.match(progressRegex);
-            if (match) {
-              let prog = Math.round(parseFloat(match[1]));
-              if (prog > lastProgress) {
-                lastProgress = prog;
-                instagramProgresso[id].progresso = Math.min(99, prog);
-                instagramProgresso[id].status = 'baixando';
+        // Função para executar yt-dlp com argumentos específicos
+        function runYtDlp(args, attempt = 1) {
+          return new Promise((resolve, reject) => {
+            console.log(`[Instagram] Tentativa ${attempt}: ${YTDLP_PATH} ${args.join(' ')}`);
+            
+            const proc = spawn(YTDLP_PATH, args);
+            proc.stderr.setEncoding('utf8');
+            proc.stdout.setEncoding('utf8');
+            
+            let lastProgress = 5;
+            let errorOutput = '';
+            const progressRegex = /\[download\]\s+(\d+\.\d+)%/;
+            
+            proc.stderr.on('data', (data) => {
+              errorOutput += data;
+              console.log(`[Instagram] stderr: ${data}`);
+              
+              const lines = data.split('\n');
+              for (const line of lines) {
+                const match = line.match(progressRegex);
+                if (match) {
+                  let prog = Math.round(parseFloat(match[1]));
+                  if (prog > lastProgress) {
+                    lastProgress = prog;
+                    instagramProgresso[id].progresso = Math.min(99, prog);
+                    instagramProgresso[id].status = 'baixando';
+                  }
+                }
               }
-            }
-          }
-        });
-        
-        proc.stdout.on('data', (data) => {
-          console.log(`[Instagram] stdout: ${data}`);
-        });
-        
-        proc.on('close', (code) => {
-          console.log(`[Instagram] Processo finalizado com código: ${code}`);
-          console.log(`[Instagram] Erro output: ${errorOutput}`);
-          
-          // Procurar arquivo baixado (pode ser mp4, jpg, etc)
-          let foundFile = null;
-          if (code === 0) {
-            const exts = ['mp4', 'jpg', 'jpeg', 'png', 'webp', 'mp3', 'm4a'];
-            for (const ext of exts) {
-              const candidate = path.join(tempDir, `instagram_${randomNum}.${ext}`);
-              if (fs.existsSync(candidate)) {
-                foundFile = candidate;
-                downloadName = `cloneweb--instagram-media--${randomNum}.${ext}`;
-                console.log(`[Instagram] Arquivo encontrado: ${foundFile}`);
-                break;
+            });
+            
+            proc.stdout.on('data', (data) => {
+              console.log(`[Instagram] stdout: ${data}`);
+            });
+            
+            proc.on('close', (code) => {
+              console.log(`[Instagram] Tentativa ${attempt} finalizada com código: ${code}`);
+              console.log(`[Instagram] Erro output: ${errorOutput}`);
+              
+              // Procurar arquivo baixado
+              let foundFile = null;
+              if (code === 0) {
+                const exts = ['mp4', 'jpg', 'jpeg', 'png', 'webp', 'mp3', 'm4a'];
+                for (const ext of exts) {
+                  const candidate = path.join(tempDir, `instagram_${randomNum}.${ext}`);
+                  if (fs.existsSync(candidate)) {
+                    foundFile = candidate;
+                    downloadName = `cloneweb--instagram-media--${randomNum}.${ext}`;
+                    console.log(`[Instagram] Arquivo encontrado: ${foundFile}`);
+                    break;
+                  }
+                }
               }
-            }
+              
+              if (foundFile) {
+                resolve({ success: true, file: foundFile });
+              } else {
+                resolve({ success: false, code, error: errorOutput });
+              }
+            });
+            
+            proc.on('error', (err) => {
+              console.error(`[Instagram] Erro no processo: ${err.message}`);
+              reject(err);
+            });
+          });
+        }
+        
+        // Tentar primeiro com cookies, depois sem
+        try {
+          let result = await runYtDlp(args, 1);
+          
+          if (!result.success) {
+            console.log(`[Instagram] Primeira tentativa falhou, tentando método alternativo...`);
+            instagramProgresso[id].progresso = 10;
+            result = await runYtDlp(fallbackArgs, 2);
           }
           
-          if (foundFile) {
+          if (result.success) {
             instagramProgresso[id].status = 'pronto';
             instagramProgresso[id].progresso = 100;
             instagramProgresso[id].downloadUrl = `/instagram/downloadfile/${id}`;
-            instagramProgresso[id].outPath = foundFile;
+            instagramProgresso[id].outPath = result.file;
             instagramProgresso[id].downloadName = downloadName;
             setTimeout(() => { 
               try { 
-                fs.unlinkSync(foundFile); 
+                fs.unlinkSync(result.file); 
                 delete instagramProgresso[id]; 
               } catch {} 
             }, 60 * 1000);
           } else {
             instagramProgresso[id].status = 'erro';
-            instagramProgresso[id].erro = `Erro ao baixar do Instagram. Código: ${code}. Detalhes: ${errorOutput.substring(0, 200)}`;
+            instagramProgresso[id].erro = `Erro ao baixar do Instagram. Código: ${result.code}. Detalhes: ${result.error.substring(0, 200)}`;
           }
-        });
-        
-        proc.on('error', (err) => {
-          console.error(`[Instagram] Erro no processo: ${err.message}`);
+        } catch (err) {
+          console.error(`[Instagram] Erro geral: ${err.message}`);
+          
+          // Tentar método alternativo se yt-dlp falhar
+          if (err.message.includes('rate-limit') || err.message.includes('login required')) {
+            console.log(`[Instagram] Tentando método alternativo...`);
+            try {
+              const { downloadInstagramAlternative } = require('./instagram-alternative');
+              
+              instagramProgresso[id].progresso = 20;
+              const result = await downloadInstagramAlternative(igurl, (progress) => {
+                instagramProgresso[id].progresso = 20 + (progress * 0.8);
+              });
+              
+              if (result.success) {
+                instagramProgresso[id].status = 'pronto';
+                instagramProgresso[id].progresso = 100;
+                instagramProgresso[id].downloadUrl = `/instagram/downloadfile/${id}`;
+                instagramProgresso[id].outPath = result.file;
+                instagramProgresso[id].downloadName = result.filename;
+                setTimeout(() => { 
+                  try { 
+                    fs.unlinkSync(result.file); 
+                    delete instagramProgresso[id]; 
+                  } catch {} 
+                }, 60 * 1000);
+                return;
+              }
+            } catch (altErr) {
+              console.error(`[Instagram] Método alternativo também falhou: ${altErr.message}`);
+            }
+          }
+          
           instagramProgresso[id].status = 'erro';
-          instagramProgresso[id].erro = 'Erro ao iniciar yt-dlp: ' + (err.message || err);
-        });
+          instagramProgresso[id].erro = 'Erro ao processar download: ' + (err.message || err);
+        }
         
       } catch (e) {
         console.error(`[Instagram] Exceção: ${e.message}`);
