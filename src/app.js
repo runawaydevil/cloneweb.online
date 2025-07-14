@@ -763,7 +763,7 @@ app.get('/ytdlp-status', (req, res) => {
 
 // Rota para Midia Downloader
 app.get('/midia', (req, res) => {
-  res.status(403).send('<div style="font-family:Segoe UI,Arial,sans-serif;padding:40px;text-align:center;background:#fff3cd;color:#856404;border-radius:12px;margin:60px auto;max-width:420px;box-shadow:0 2px 12px #0001;font-size:1.2rem;">⚠️ O downloader de mídia está temporariamente desativado devido a restrições do Instagram e outras plataformas.<br><br>Em breve, novas soluções!</div>');
+  res.status(403).send('<div style="font-family:Segoe UI,Arial,sans-serif;padding:40px;text-align:center;background:#fff3cd;color:#856404;border-radius:12px;margin:60px auto;max-width:420px;box-shadow:0 2px 12px #0001;font-size:1.2rem;">⚠️ Media downloader is temporarily disabled due to Instagram and other platform restrictions.<br><br>New solutions coming soon!</div>');
 });
 
 // --- INÍCIO CONTADOR DE DOWNLOADS ---
