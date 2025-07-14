@@ -23,11 +23,14 @@
       <p class="slogan">Download any media from the web.</p>
     </header>
     <main>
-      <form class="clone-form" id="midiaForm">
-        <label for="midiaurl">Media link (Instagram, Reddit, Pinterest or YouTube):</label>
-        <input type="url" id="midiaurl" name="midiaurl" placeholder="Paste the post or video link here" required>
-        <button type="submit">Download</button>
+      <form id="midiaForm" class="clone-form" method="POST" action="/midia" autocomplete="off">
+        <label for="midiaurl">Mídia URL:</label>
+        <input type="url" id="midiaurl" name="midiaurl" placeholder="Cole o link do Instagram, Reddit ou Pinterest" required>
+        <button id="midiaBtn" type="submit" disabled style="background: #ccc; color: #888; cursor: not-allowed; opacity: 0.7;">Download de mídia temporariamente desativado</button>
       </form>
+      <div style="margin-top: 12px; color: #856404; background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 14px; border-radius: 7px; font-size: 0.97rem;">
+        ⚠️ O download de mídia está temporariamente desativado devido a restrições do Instagram e outras plataformas. Em breve, novas soluções!
+      </div>
       <section class="info">
         <h2>About</h2>
         <p>Media Downloader allows you to easily download videos and photos from Instagram, Reddit, Pinterest, and many other public sources. Simply paste the link of the media you want, and the system will automatically detect and fetch the highest quality version available. No registration required, no watermarks, and completely free. Please note: YouTube downloads are currently unavailable due to platform restrictions.</p>
