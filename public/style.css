@@ -250,6 +250,42 @@ footer {
   transform: translateY(-2px) scale(1.04);
   box-shadow: 0 4px 16px #f357a855;
 }
+
+/* Melhorias no sistema de progresso */
+.progress-container {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #7b2ff2, #f357a8, #ffb347);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 20px rgba(123, 47, 242, 0.3);
+}
+
+#progressStats {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Courier New', monospace;
+}
+
+.loading-overlay {
+  backdrop-filter: blur(10px);
+}
+
+/* Animação para o progresso */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.progress-bar {
+  animation: pulse 2s infinite;
+}
 .downloads-counter {
   margin: 18px auto 0 auto;
   padding: 10px 28px;

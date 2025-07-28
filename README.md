@@ -7,13 +7,43 @@
 ---
 
 ## Features
-- Clone any public website and download as a ZIP
-- Options: Rename all files, Simplified download, Copy mobile version, Save website structure
-- Responsive and modern UI
-- Progress bar and download button
-- SEO optimized for search engines
-- All ZIPs are stored for 7 days for admin review
-- All clone actions are logged for security and audit
+
+### 🚀 **Advanced Website Cloning**
+- **Smart Resource Detection**: Automatically detects and downloads all website resources
+- **SPA Support**: Uses Puppeteer to handle Single Page Applications and JavaScript-rendered content
+- **Parallel Downloads**: Downloads multiple files simultaneously for faster cloning
+- **External Resources**: Optionally includes external resources (CDNs, fonts, etc.)
+- **Deep Crawling**: Configurable depth for multi-page website cloning
+
+### 🎯 **Intelligent Optimization**
+- **Image Optimization**: Automatically compresses images while maintaining quality
+- **Code Minification**: Minifies CSS and JavaScript files to reduce size
+- **Smart Caching**: Prevents duplicate downloads with intelligent caching system
+- **Size Management**: Configurable limits to prevent excessive resource usage
+
+### 📊 **Advanced Progress Tracking**
+- **Real-time Progress**: Detailed progress information with current operation status
+- **File Statistics**: Shows total files, downloaded files, optimized files, and errors
+- **Performance Metrics**: Displays download speed, total size, and completion time
+- **Error Reporting**: Comprehensive error tracking and reporting
+
+### 🛠 **Robust Error Handling**
+- **Automatic Retry**: Exponential backoff retry mechanism for failed downloads
+- **Graceful Degradation**: Falls back to alternative methods when primary fails
+- **Comprehensive Logging**: Detailed logging system with multiple levels and rotation
+- **Resource Validation**: Validates and sanitizes all downloaded resources
+
+### ⚙️ **Configurable Options**
+- **Optimization Settings**: Enable/disable image optimization and code minification
+- **Download Limits**: Configurable file count, size limits, and concurrency
+- **Crawling Depth**: Control how deep the cloner should traverse website links
+- **Resource Filtering**: Choose which types of resources to include/exclude
+
+### 🔒 **Security & Performance**
+- **Rate Limiting**: Prevents abuse with configurable rate limits
+- **Resource Validation**: Validates file types and sizes for security
+- **Memory Management**: Efficient memory usage with streaming downloads
+- **Automatic Cleanup**: Automatic cleanup of temporary files and old archives
 
 ---.
 

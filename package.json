@@ -18,11 +18,15 @@
     "axios": "^1.10.0",
     "body-parser": "^2.2.0",
     "cheerio": "^1.1.0",
+    "clean-css": "^5.3.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "geoip-lite": "^1.4.10",
+
     "puppeteer": "^24.12.1",
     "rimraf": "^6.0.1",
+    "sharp": "^0.33.5",
+    "uglify-js": "^3.19.3",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

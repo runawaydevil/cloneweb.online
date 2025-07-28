@@ -33,6 +33,7 @@
       <div class="progress-bar" id="progressBar" style="width:0%"></div>
     </div>
     <div id="progressMsg">Preparing cloning...</div>
+    <div id="progressStats" style="font-size:0.85rem;color:#666;margin-top:8px;display:none;"></div>
     <button id="downloadBtn" style="display:none;margin-top:18px;">Download ZIP</button>
   </div>
   <div class="container">
@@ -86,6 +87,7 @@
     const overlay = document.getElementById('loadingOverlay');
     const progressBar = document.getElementById('progressBar');
     const progressMsg = document.getElementById('progressMsg');
+    const progressStats = document.getElementById('progressStats');
     const downloadBtn = document.getElementById('downloadBtn');
     let pollInterval = null;
     form.addEventListener('submit', async function(e) {
@@ -93,6 +95,8 @@
       overlay.style.display = 'flex';
       progressBar.style.width = '0%';
       progressMsg.textContent = 'Preparing cloning...';
+      progressStats.style.display = 'none';
+      progressStats.textContent = '';
       downloadBtn.style.display = 'none';
       // Envia formulário via fetch
       const data = new FormData(form);
@@ -109,9 +113,36 @@
         const r = await fetch(`/progresso/${id}`);
         const prog = await r.json();
         progressBar.style.width = (prog.progresso || 0) + '%';
-        if (prog.status === 'iniciando') progressMsg.textContent = 'Starting cloning...';
-        else if (prog.status === 'baixando') progressMsg.textContent = `Downloading and compressing... (${prog.progresso}%)`;
-        else if (prog.status === 'pronto') {
+        // Atualizar mensagem baseada no status e etapa
+        if (prog.status === 'iniciando') {
+          progressMsg.textContent = prog.etapa || 'Starting cloning...';
+        } else if (prog.status === 'analisando') {
+          progressMsg.textContent = prog.etapa || 'Analyzing page...';
+        } else if (prog.status === 'coletando') {
+          progressMsg.textContent = prog.etapa || 'Collecting resources...';
+        } else if (prog.status === 'baixando') {
+          const files = prog.totalArquivos ? ` (${prog.arquivosBaixados}/${prog.totalArquivos})` : '';
+          progressMsg.textContent = `${prog.etapa || 'Downloading resources...'}${files}`;
+        } else if (prog.status === 'processando') {
+          progressMsg.textContent = prog.etapa || 'Processing files...';
+        } else if (prog.status === 'compactando') {
+          progressMsg.textContent = prog.etapa || 'Creating ZIP...';
+        } else if (prog.status === 'concluido') {
+          progressMsg.textContent = prog.etapa || 'Completed!';
+          
+          // Mostrar estatísticas detalhadas
+          const stats = [];
+          if (prog.totalArquivos) stats.push(`${prog.totalArquivos} files`);
+          if (prog.arquivosOtimizados) stats.push(`${prog.arquivosOtimizados} optimized`);
+          if (prog.erros) stats.push(`${prog.erros} errors`);
+          if (prog.tamanhoTotal) stats.push(prog.tamanhoTotal);
+          if (prog.duracao) stats.push(prog.duracao);
+          
+          if (stats.length) {
+            progressStats.textContent = stats.join(' • ');
+            progressStats.style.display = 'block';
+          }
+        } else if (prog.status === 'pronto') {
           progressBar.style.width = '100%';
           progressMsg.textContent = 'Ready! Click to download the ZIP.';
           downloadBtn.style.display = 'block';

@@ -86,19 +86,45 @@ app.post('/clonar', async (req, res) => {
   if (!url) {
     return res.status(400).json({ erro: 'URL obrigatória.' });
   }
+  
   const id = uuidv4();
-  progressoTarefas[id] = { status: 'iniciando', progresso: 0, erro: null };
+  progressoTarefas[id] = { 
+    status: 'iniciando', 
+    etapa: 'Preparando clonagem...', 
+    progresso: 0, 
+    erro: null,
+    totalArquivos: 0,
+    arquivosBaixados: 0,
+    erros: 0,
+    arquivosOtimizados: 0,
+    tamanhoTotal: '0 Bytes',
+    duracao: '0s'
+  };
+  
   res.json({ id });
+  
   // Processa em background
   (async () => {
     try {
-      progressoTarefas[id] = { status: 'baixando', progresso: 10 };
-      const { zipPath, tempDir } = await clonarESzipar({ url, renameAssets, simpleDownload, mobileVersion, saveStructure, returnTempDir: true, progresso: progressoTarefas[id] });
-      progressoTarefas[id] = { status: 'pronto', progresso: 100 };
+      const { zipPath, tempDir } = await clonarESzipar({ 
+        url, 
+        renameAssets, 
+        simpleDownload, 
+        mobileVersion, 
+        saveStructure, 
+        returnTempDir: true, 
+        progresso: progressoTarefas[id] 
+      });
+      
+      progressoTarefas[id].status = 'pronto';
+      progressoTarefas[id].progresso = 100;
       zipsProntos[id] = { zipPath, tempDir };
       registrarClone({ url, zipPath, status: 'sucesso', req });
+      
     } catch (e) {
-      progressoTarefas[id] = { status: 'erro', progresso: 0, erro: e.message };
+      progressoTarefas[id].status = 'erro';
+      progressoTarefas[id].progresso = 0;
+      progressoTarefas[id].erro = e.message;
       registrarClone({ url, status: 'erro', erro: e.message, req });
     }
   })();
