@@ -314,6 +314,13 @@ async function clonarESzipar({ url, renameAssets, simpleDownload, mobileVersion,
 // Limpeza automática de ZIPs antigos (mais de 7 dias)
 function limparZipsAntigos() {
   const dir = path.join(__dirname, '../storage');
+  
+  // Verifica se a pasta existe, se não existir, cria
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    return;
+  }
+  
   const files = fs.readdirSync(dir);
   const agora = Date.now();
   for (const file of files) {

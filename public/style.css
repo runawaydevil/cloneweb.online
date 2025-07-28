@@ -251,16 +251,7 @@ footer {
   box-shadow: 0 4px 16px #f357a855;
 }
 
-.reddit-btn {
-  background: linear-gradient(90deg,#ff4500,#ffb347,#7b2ff2);
-}
-.pinterest-btn {
-  background: linear-gradient(90deg,#e60023,#ffb347,#7b2ff2);
-}
 
-/* Youtube Downloader ajustes */
-#ytProgressWrap {
-  width: 100%;
   max-width: 370px;
   margin: 0 auto;
   display: flex;

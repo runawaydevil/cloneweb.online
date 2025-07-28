@@ -3,8 +3,5 @@ Allow: /
 Disallow: /clonar
 Disallow: /progresso
 Disallow: /download
-Disallow: /youtube
-Disallow: /reddit
-Disallow: /pinterest
-Disallow: /instagram
+
 Sitemap: https://cloneweb.online/sitemap.xml 

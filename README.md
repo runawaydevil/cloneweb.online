@@ -73,31 +73,4 @@ MIT
 
 **Developed by RunawayDevil - {year}** 
 
----
-
-## Novas Funcionalidades
-
-### Youtube Downloader (yt-dlp)
-- Baixe vídeos do YouTube em MP3 (áudio) ou MP4 (vídeo até 1080p).
-- Utiliza o yt-dlp para máxima compatibilidade com o YouTube.
-- Barra de progresso visual e download automático.
-- O arquivo baixado é removido do servidor em até 1 minuto após o download.
-
-### Reddit Downloader
-- Baixe vídeos de posts do Reddit (com áudio, se disponível).
-- O sistema une vídeo e áudio automaticamente.
-- Barra de progresso visual e download automático.
-- O arquivo baixado é removido do servidor em até 1 minuto após o download.
-
-### Pinterest Downloader
-- Baixe vídeos de pins do Pinterest facilmente.
-- Barra de progresso visual e download automático.
-- O arquivo baixado é removido do servidor em até 1 minuto após o download.
-
----
-
-## Segurança e Privacidade
-- **Os arquivos baixados do YouTube, Reddit e Pinterest NÃO ficam salvos no servidor por mais de 1 minuto.**
-- Após o download, os arquivos temporários são automaticamente removidos.
-
 --- 
