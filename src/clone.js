@@ -8,9 +8,29 @@ const { URL } = require('url');
 const os = require('os');
 const puppeteer = require('puppeteer');
 // const pLimit = require('p-limit'); // Removido temporariamente
-const sharp = require('sharp');
-const CleanCSS = require('clean-css');
-const UglifyJS = require('uglify-js');
+// Importações opcionais para otimização
+let sharp, CleanCSS, UglifyJS;
+
+try {
+  sharp = require('sharp');
+} catch (e) {
+  console.warn('Sharp não disponível - otimização de imagens desabilitada');
+  sharp = null;
+}
+
+try {
+  CleanCSS = require('clean-css');
+} catch (e) {
+  console.warn('CleanCSS não disponível - minificação de CSS desabilitada');
+  CleanCSS = null;
+}
+
+try {
+  UglifyJS = require('uglify-js');
+} catch (e) {
+  console.warn('UglifyJS não disponível - minificação de JS desabilitada');
+  UglifyJS = null;
+}
 const crypto = require('crypto');
 const config = require('./config');
 const logger = require('./logger');
@@ -227,6 +247,11 @@ class WebCloner {
 
   // Otimizar imagem
   async optimizeImage(imagePath) {
+    if (!sharp) {
+      console.warn('Sharp não disponível - pulando otimização de imagem');
+      return;
+    }
+
     try {
       const ext = path.extname(imagePath).toLowerCase();
       const tempPath = imagePath + '.tmp';
@@ -260,6 +285,11 @@ class WebCloner {
 
   // Minificar CSS
   async minifyCSS(cssPath) {
+    if (!CleanCSS) {
+      console.warn('CleanCSS não disponível - pulando minificação de CSS');
+      return;
+    }
+
     try {
       const css = fs.readFileSync(cssPath, 'utf8');
       const result = new CleanCSS({
@@ -277,6 +307,11 @@ class WebCloner {
 
   // Minificar JavaScript
   async minifyJS(jsPath) {
+    if (!UglifyJS) {
+      console.warn('UglifyJS não disponível - pulando minificação de JS');
+      return;
+    }
+
     try {
       const js = fs.readFileSync(jsPath, 'utf8');
       const result = UglifyJS.minify(js, {

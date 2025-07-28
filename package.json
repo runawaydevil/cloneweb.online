@@ -7,7 +7,9 @@
     "minify:js": "terser src/app.js -o src/app.min.js -c -m && terser src/clone.js -o src/clone.min.js -c -m",
     "minify:css": "postcss public/style.css -o public/style.min.css",
     "build": "npm run minify:js && npm run minify:css",
-    "start": "node src/app.js"
+    "install-deps": "node install-deps.js",
+    "start": "node src/app.js",
+    "test": "node quick-test.js"
   },
   "keywords": [],
   "author": "",

@@ -79,7 +79,18 @@ app.get('/', (req, res) => {
 });
 
 // Rota para clonar e baixar o site
-const { clonarESzipar } = require('./clone');
+let clonarESzipar;
+
+try {
+  // Tentar usar a versão completa primeiro
+  clonarESzipar = require('./clone').clonarESzipar;
+  console.log('✅ Sistema de clonagem completo carregado');
+} catch (error) {
+  console.warn('⚠️ Sistema completo falhou, usando versão simplificada:', error.message);
+  // Fallback para versão simplificada
+  clonarESzipar = require('./clone-simple').clonarESzipar;
+  console.log('✅ Sistema de clonagem simplificado carregado');
+}
 
 app.post('/clonar', async (req, res) => {
   const { url, renameAssets, simpleDownload, mobileVersion, saveStructure } = req.body;
@@ -158,22 +169,44 @@ app.get('/download/:id', (req, res) => {
   const downloadName = `cloneweb-${dominio}-${randomNum}.zip`;
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', `attachment; filename=\"${downloadName}\"`);
-  res.download(info.zipPath, downloadName, (err) => {
-    // Não remover o ZIP da storage imediatamente, apenas a pasta temporária
+  // Verificar se o arquivo existe antes de tentar enviar
+  if (!fs.existsSync(info.zipPath)) {
+    return res.status(404).send('Arquivo ZIP não encontrado.');
+  }
+
+  // Configurar headers para download
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+  res.setHeader('Content-Length', fs.statSync(info.zipPath).size);
+
+  // Criar stream de leitura
+  const fileStream = fs.createReadStream(info.zipPath);
+  
+  fileStream.on('error', (err) => {
+    console.error('Erro ao ler arquivo ZIP:', err);
+    if (!res.headersSent) {
+      res.status(500).send('Erro ao ler arquivo ZIP');
+    }
+  });
+
+  fileStream.on('end', () => {
+    // Limpar arquivos temporários após o download
     try {
-      if (info.tempDir && fs.existsSync(info.tempDir)) rimraf.sync(info.tempDir);
-      // Remover o registro do ZIP e progresso após 2 minutos
+      if (info.tempDir && fs.existsSync(info.tempDir)) {
+        rimraf.sync(info.tempDir);
+      }
+      // Remover registros após 2 minutos
       setTimeout(() => {
         delete zipsProntos[req.params.id];
         delete progressoTarefas[req.params.id];
-      }, 2 * 60 * 1000); // 2 minutos
+      }, 2 * 60 * 1000);
     } catch (e) {
       console.error('Erro ao limpar arquivos temporários:', e);
     }
-    if (err) {
-      console.error('Erro ao enviar ZIP:', err);
-    }
   });
+
+  // Pipe do arquivo para a resposta
+  fileStream.pipe(res);
 });
 
 
