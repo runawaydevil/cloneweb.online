@@ -26,7 +26,7 @@
     "geoip-lite": "^1.4.10",
 
     "puppeteer": "^24.12.1",
-    "rimraf": "^6.0.1",
+    "rimraf": "^3.0.2",
     "sharp": "^0.33.5",
     "uglify-js": "^3.19.3",
     "uuid": "^11.1.0"
